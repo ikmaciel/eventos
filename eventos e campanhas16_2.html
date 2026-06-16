@@ -1,0 +1,1943 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGE - Eventos e Campanhas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Dados externalizados -->
+  <script src="paises.js"></script>
+  <script src="ufs.js"></script>
+  <script src="regiao.js"></script>
+  <script src="tipodeevento.js"></script>
+  <script src="tagueamento.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .tab-active { @apply border-blue-600 text-blue-600 bg-blue-50/50; }
+    .tab-inactive { @apply border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50; }
+    .chip { @apply inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border m-0.5; }
+    .chip-blue { @apply bg-blue-50 text-blue-700 border-blue-100; }
+    .chip-green { @apply bg-green-50 text-green-700 border-green-100; }
+    .chip-slate { @apply bg-slate-50 text-slate-600 border-slate-200; }
+    .page-btn { @apply px-3 py-1 mx-1 rounded-md border border-slate-200 text-xs font-bold transition-all hover:bg-slate-100; }
+    .page-btn.active { @apply bg-blue-600 text-white border-blue-600; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+
+    .autocomplete-list {
+      @apply absolute z-50 w-full bg-white border border-slate-200 rounded-b-2xl shadow-2xl max-h-48 overflow-y-auto mt-1 hidden;
+    }
+    .autocomplete-item {
+      @apply p-3 cursor-pointer text-sm text-slate-700 hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-none;
+    }
+    .checkbox-label { @apply flex items-center gap-2 cursor-pointer text-[11px] font-bold text-slate-600 uppercase tracking-tight; }
+    .checkbox-input { @apply w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20; }
+    .radio-group { @apply flex gap-6 items-center; }
+    .radio-label { @apply flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700; }
+    .radio-input { @apply w-4 h-4 border-slate-300 text-blue-600 focus:ring-blue-500/20; }
+
+    /* Estilos para tags */
+    .tag-automatica {
+      @apply chip chip-blue;
+    }
+    .tag-manual {
+      @apply chip chip-green;
+    }
+    .tag-remove {
+      @apply ml-1 text-slate-400 hover:text-slate-700 transition-colors;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen py-10 px-4">
+
+  <div class="max-w-[1700px] mx-auto space-y-6">
+
+    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">SGE</h1>
+          <p class="text-sm text-slate-500">Gestão Estratégica de Eventos e Campanhas</p>
+        </div>
+
+        <div class="flex bg-slate-200/60 p-1 rounded-xl w-fit">
+          <button onclick="switchEntityTab('eventos')" id="btn-entity-eventos"
+            class="px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all bg-white shadow-sm text-blue-600">
+            Eventos
+          </button>
+          <button onclick="switchEntityTab('campanhas')" id="btn-entity-campanhas"
+            class="px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-slate-400">
+            Campanhas
+          </button>
+          <button onclick="switchEntityTab('relacoes')" id="btn-entity-relacoes"
+            class="px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-slate-400">
+            Relacionamentos
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 p-8">
+
+        <!-- COLUNA ESQUERDA: FORMULÁRIOS -->
+        <div class="xl:col-span-4 space-y-6">
+
+          <!-- FORMULÁRIO DE EVENTO -->
+          <div id="panel-evento-form" class="bg-white rounded-[2rem] shadow-lg border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 bg-blue-600 text-white">
+              <h2 id="eventFormTitle" class="text-lg font-black">Cadastro de Evento</h2>
+              <p class="text-blue-100 text-xs mt-1">Evento pode existir com ou sem campanha</p>
+            </div>
+
+            <div class="flex border-b border-slate-100 bg-slate-50/30">
+              <button type="button" onclick="switchEventTab('main')" id="btn-event-tab-main" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all tab-active">Principais</button>
+              <button type="button" onclick="switchEventTab('extra')" id="btn-event-tab-extra" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all tab-inactive">Detalhamento</button>
+            </div>
+
+            <form id="eventForm" class="p-6 space-y-4">
+              <input type="hidden" id="editingEventId" />
+
+              <div id="event-tab-main" class="space-y-4">
+                <div class="space-y-1 relative">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome do Evento * (máx. 34 caracteres)</label>
+                  <input type="text" id="nomeEvento" required maxlength="34" placeholder="Digite o nome..."
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                  <div id="autocomplete-event-list" class="autocomplete-list"></div>
+                </div>
+
+                <div class="p-5 bg-slate-50 rounded-[1.5rem] border border-slate-200 space-y-3">
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Identificação Eloqua do Evento</label>
+                  <input type="text" id="nomeEloquaEvento" readonly tabindex="-1"
+                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-slate-500 font-mono text-xs cursor-not-allowed shadow-sm"
+                    placeholder="Gerado automaticamente...">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ano do Evento *</label>
+                    <input type="number" id="edicaoEvento" value="2026" required
+                      class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                  </div>
+                  <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mês do Evento *</label>
+                    <select id="mesEvento" required
+                      class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                      <option value="">Selecione...</option>
+                      <option>Janeiro</option><option>Fevereiro</option><option>Março</option><option>Abril</option>
+                      <option>Maio</option><option>Junho</option><option>Julho</option><option>Agosto</option>
+                      <option>Setembro</option><option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">País Origem do Evento</label>
+                  <select id="paisEvento" onchange="togglePaisEvento(); syncEventLocationFields();"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <!-- Preenchido via JavaScript -->
+                  </select>
+                </div>
+
+                <div id="containerUFEvento" class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">UF origem do evento</label>
+                  <select id="ufEvento" onchange="syncEventLocationFields()"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <!-- Preenchido via JavaScript -->
+                  </select>
+                </div>
+
+                <div id="containerLocalidadeEvento" class="hidden space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Localidade Internacional</label>
+                  <input type="text" id="localidadeInternacionalEvento" placeholder="Cidade..."
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Site Oficial</label>
+                  <input type="text" id="siteEvento" placeholder="https://..." oninput="atualizarTagsFromSite()"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Área de tags (logo abaixo do site) -->
+                <div class="space-y-2">
+				                  <!-- Botão para gerar tags com IA -->
+                  <button type="button" onclick="gerarTagsComIA(event)" 
+                    class="mt-2 w-full py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors">
+                    Gerar Tags Automaticamente
+                  </button>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tags</label>
+                  <div id="tagsContainer" class="flex flex-wrap gap-1 p-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[42px]">
+                    <!-- Chips serão inseridos aqui dinamicamente -->
+                  </div>
+                  <div class="flex gap-2">
+                    <input type="text" id="tagInputManual" placeholder="Nova tag..." 
+                      class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+                    <button type="button" onclick="adicionarTagManual()" 
+                      class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors">
+                      Adicionar
+                    </button>
+                  </div>
+
+                </div>
+              </div> <!-- Fim da aba main -->
+
+              <div id="event-tab-extra" class="hidden space-y-4">
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Descrição/Justificativa do Evento</label>
+                  <textarea id="descEvento" rows="3"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Tipo do Evento e Patrocínio SERPRO -->
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tipo do Evento</label>
+                  <select id="tipoEvento"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                    <!-- Preenchido via JavaScript com tiposDeEvento -->
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrocínio SERPRO</label>
+                  <div class="radio-group">
+                    <label class="radio-label">
+                      <input type="radio" name="patrocinioSerpro" value="sim" class="radio-input"> Sim
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" name="patrocinioSerpro" value="nao" class="radio-input" checked> Não
+                    </label>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data Início</label>
+                    <input type="date" id="dataInicioEvento"
+                      class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
+                  <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data Fim</label>
+                    <input type="date" id="dataFimEvento"
+                      class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <div class="grid grid-cols-3 gap-3">
+                    <div class="space-y-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase">CEP</label>
+                      <input type="text" id="cepEvento" placeholder="00000-000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                    </div>
+                    <div class="col-span-2 space-y-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase">Endereço</label>
+                      <input type="text" id="enderecoEvento" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase">Município</label>
+                      <input type="text" id="municipioEvento" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase">Local</label>
+                      <input type="text" id="localLivre" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase">UF sincronizada</label>
+                      <input type="text" id="ufEventoSync" readonly
+                        class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase">País sincronizado</label>
+                      <input type="text" id="paisEventoSync" readonly
+                        class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SEÇÃO DE VÍNCULOS COM CAMPANHAS (DENTRO DO EVENTO) -->
+                <div class="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campanhas vinculadas</label>
+                  <div id="eventCampaignLinks" class="flex flex-wrap min-h-[42px] p-3 bg-white border border-slate-200 rounded-xl"></div>
+                  
+                  <div class="flex gap-2 items-end">
+                    <div class="flex-1">
+                      <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Adicionar campanhas</label>
+                      <select id="eventCampaignSelect" multiple class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm h-24">
+                        <!-- preenchido via JS -->
+                      </select>
+                    </div>
+                    <button type="button" onclick="linkSelectedCampaignsToEvent()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700">
+                      Vincular
+                    </button>
+                  </div>
+                  <p class="text-[9px] text-slate-400">Segure Ctrl para selecionar várias campanhas</p>
+                </div>
+              </div> <!-- Fim da aba extra -->
+
+              <button type="submit" id="btnSubmitEvento"
+                class="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg transition-all uppercase tracking-widest text-[10px]">
+                Salvar Evento
+              </button>
+            </form>
+          </div>
+
+          <!-- FORMULÁRIO DE CAMPANHA -->
+          <div id="panel-campanha-form" class="hidden bg-white rounded-[2rem] shadow-lg border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 bg-green-600 text-white">
+              <h2 id="campaignFormTitle" class="text-lg font-black">Cadastro de Campanha</h2>
+              <p class="text-green-100 text-xs mt-1">Campanha pode existir com ou sem evento</p>
+            </div>
+
+            <form id="campaignForm" class="p-6 space-y-4">
+              <input type="hidden" id="editingCampaignId" />
+
+              <div class="space-y-1 relative">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome da Campanha * (máx. 34 caracteres)</label>
+                <input type="text" id="nomeCampanha" required maxlength="34" placeholder="Digite o nome..."
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/10">
+                <div id="autocomplete-campaign-list" class="autocomplete-list"></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data Início *</label>
+                  <input type="date" id="dataInicioCampanha" required
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-green-500">
+                </div>
+                <!-- Campo Data Fim removido -->
+              </div>
+              
+              <div class="p-5 bg-slate-50 rounded-[1.5rem] border border-slate-200 space-y-3">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Identificação Eloqua da Campanha</label>
+                <input type="text" id="nomeEloquaCampanha" readonly tabindex="-1"
+                  class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-slate-500 font-mono text-xs cursor-not-allowed shadow-sm"
+                  placeholder="Gerado automaticamente...">
+              </div>
+
+              <div class="p-5 bg-slate-50 rounded-[1.5rem] border border-slate-200 space-y-4">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Registro do Alvo</label>
+                
+                <div class="flex flex-col gap-3">
+                  <div class="space-y-3">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="alvoInternacional" class="checkbox-input" onchange="toggleRegistroAlvo('internacional')">
+                      Internacional
+                    </label>
+                    <div id="areaInternacional" class="hidden pl-6 grid grid-cols-2 gap-2">
+                      <!-- Preenchido via JavaScript com os países de paises.js -->
+                    </div>
+                  </div>
+
+                  <div class="space-y-3">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="alvoNacional" class="checkbox-input" onchange="toggleRegistroAlvo('nacional')">
+                      Nacional
+                    </label>
+                    
+                    <div id="areaNacional" class="hidden pl-6 space-y-3">
+                      <div class="flex gap-4">
+                        <label class="checkbox-label">
+                          <input type="radio" name="tipoNacional" value="regiao" class="checkbox-input" onchange="toggleNacionalSubArea('regiao')"> Região
+                        </label>
+                        <label class="checkbox-label">
+                          <input type="radio" name="tipoNacional" value="uf" class="checkbox-input" onchange="toggleNacionalSubArea('uf')"> UF
+                        </label>
+                      </div>
+
+                      <div id="areaNacionalRegiao" class="hidden grid grid-cols-2 gap-2">
+                        <!-- Preenchido via JavaScript com as regiões de regiao.js -->
+                      </div>
+
+                      <div id="areaNacionalUF" class="hidden">
+                        <select id="ufAlvo" multiple class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-xs h-24">
+                          <!-- Preenchido via JavaScript com as UFs de ufs.js -->
+                        </select>
+                        <p class="text-[9px] text-slate-400 mt-1 uppercase font-bold">Segure Ctrl para selecionar vários</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SEÇÃO DE VÍNCULOS COM EVENTOS (DENTRO DA CAMPANHA) -->
+              <div class="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Eventos vinculados</label>
+                <div id="campaignEventLinks" class="flex flex-wrap min-h-[42px] p-3 bg-white border border-slate-200 rounded-xl"></div>
+                
+                <div class="flex gap-2 items-end">
+                  <div class="flex-1">
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Adicionar eventos</label>
+                    <select id="campaignEventSelect" multiple class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm h-24">
+                      <!-- preenchido via JS -->
+                    </select>
+                  </div>
+                  <button type="button" onclick="linkSelectedEventsToCampaign()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-700">
+                    Vincular
+                  </button>
+                </div>
+                <p class="text-[9px] text-slate-400">Segure Ctrl para selecionar vários eventos</p>
+              </div>
+
+              <button type="submit" id="btnSubmitCampanha"
+                class="w-full py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 shadow-lg transition-all uppercase tracking-widest text-[10px]">
+                Salvar Campanha
+              </button>
+            </form>
+          </div>
+
+          <!-- FORMULÁRIO DE RELACIONAMENTO -->
+          <div id="panel-relacao-form" class="hidden bg-white rounded-[2rem] shadow-lg border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 bg-slate-900 text-white">
+              <h2 class="text-lg font-black">Vincular Evento e Campanha</h2>
+              <p class="text-slate-300 text-xs mt-1">Tabela de junção muitos para muitos</p>
+            </div>
+
+            <form id="relationForm" class="p-6 space-y-4">
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Evento</label>
+                <select id="relationEventSelectRel"
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"></select>
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campanha</label>
+                <select id="relationCampaignSelectRel"
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"></select>
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Observação do vínculo</label>
+                <input type="text" id="relationNote" placeholder="Ex.: campanha principal do evento"
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+              </div>
+
+              <button type="submit"
+                class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 shadow-lg transition-all uppercase tracking-widest text-[10px]">
+                Criar vínculo
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA: VISUALIZAÇÃO (LISTA / MATRIZ) -->
+        <div class="xl:col-span-8">
+          <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden min-h-[900px] flex flex-col">
+
+            <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/40 space-y-4">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex bg-slate-200/50 p-1 rounded-xl w-fit">
+                  <button onclick="switchMainView('list')" id="btn-view-list"
+                    class="px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all bg-white shadow-sm text-blue-600">
+                    Lista
+                  </button>
+                  <button onclick="switchMainView('matrix')" id="btn-view-matrix"
+                    class="px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-slate-400">
+                    Matriz
+                  </button>
+                </div>
+
+                <span id="gridCount" class="text-[10px] font-black bg-blue-600 text-white px-4 py-1.5 rounded-full uppercase tracking-tighter">
+                  0 itens
+                </span>
+              </div>
+
+              <div class="relative">
+                <input type="text" id="gridSearch" onkeyup="renderAll()" placeholder="Filtrar registros..."
+                  class="w-full pl-10 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-500/5 transition-all">
+                <span class="absolute left-3.5 top-4.5 text-slate-300">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5" stroke-linecap="round"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <div id="main-view-list" class="flex-1 overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead class="bg-white border-b border-slate-100">
+                  <tr id="tableHeadRow" class="text-[9px] uppercase font-black text-slate-400"></tr>
+                </thead>
+                <tbody id="gridBody" class="text-sm divide-y divide-slate-50"></tbody>
+              </table>
+            </div>
+
+            <div id="main-view-matrix" class="hidden flex-1 overflow-auto p-8 bg-slate-50/40">
+              <div id="matrixContainer" class="w-full"></div>
+            </div>
+
+            <div class="px-8 py-5 border-t border-slate-100 bg-white flex justify-center items-center" id="paginationControls"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center z-[100]">
+    <div class="bg-white rounded-[2rem] p-10 text-center max-w-md w-full shadow-2xl">
+      <h3 id="modalTitle" class="text-lg font-black text-slate-900 uppercase tracking-widest">Confirmado</h3>
+      <div id="modalCode" class="text-3xl font-black text-blue-600 bg-blue-50 py-5 rounded-[1.5rem] border border-blue-100 my-6 tracking-tight">OK</div>
+      <button onclick="closeModal()"
+        class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-colors">
+        Fechar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ==================== ESTADO GLOBAL ====================
+      let currentEntityTab = 'eventos';
+      let currentMainView = 'list';
+
+      let eventSequential = 1000;
+      let campaignSequential = 1000;
+
+      let itemsPerPage = 12;
+      let currentPage = 1;
+
+      const mesesOrdem = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const mesesNumMap = {
+        "Janeiro": "01", "Fevereiro": "02", "Março": "03", "Abril": "04",
+        "Maio": "05", "Junho": "06", "Julho": "07", "Agosto": "08",
+        "Setembro": "09", "Outubro": "10", "Novembro": "11", "Dezembro": "12"
+      };
+	
+
+      let events = [];
+      let campaigns = [];
+      let eventCampaignRelations = [];
+
+      // Estado local das tags do evento em edição
+      let currentEventTags = []; // array de { texto, automatica }
+
+      // ==================== FUNÇÕES DE GERAÇÃO DE CÓDIGOS ====================
+      function generateEventCode() {
+        return `EVT-${eventSequential++}`;
+      }
+
+      function generateCampaignCode() {
+        return `CMP-${campaignSequential++}`;
+      }
+
+      function generateEventEloquaName(paisNome, uf, mesNome, anoLongo, nome) {
+        let paisSigla = 'XX';
+        if (paisNome.toUpperCase() === 'BRASIL') {
+          paisSigla = 'BRA';
+        } else {
+          const paisEncontrado = paises.find(p => p.nome.toUpperCase() === paisNome.toUpperCase());
+          if (paisEncontrado) paisSigla = paisEncontrado.sigla;
+        }
+
+        const ufPart = (paisNome.toUpperCase() === 'BRASIL' && uf) ? `-${uf}` : '';
+
+        const mm = mesesNumMap[mesNome] || '00';
+        const yy = anoLongo ? String(anoLongo).slice(-2) : '00';
+
+        const nomeLimitado = nome.substring(0, 34);
+        const nomeCompleto = `E[${paisSigla}${ufPart}.${mm}/${yy}.${nomeLimitado}]`;
+        return nomeCompleto.substring(0, 50);
+      }
+
+      function getPaisUfFromAlvo() {
+        const internacionalChecked = document.getElementById('alvoInternacional')?.checked;
+        if (internacionalChecked) {
+          const paisesCheckbox = document.querySelectorAll('#areaInternacional input[type="checkbox"]:checked');
+          if (paisesCheckbox.length > 0) {
+            const primeiroPais = paisesCheckbox[0].value;
+            const paisEncontrado = paises.find(p => p.nome === primeiroPais);
+            if (paisEncontrado) {
+              return { paisSigla: paisEncontrado.sigla, uf: null };
+            }
+          }
+        }
+
+        const nacionalChecked = document.getElementById('alvoNacional')?.checked;
+        if (nacionalChecked) {
+          const ufRadio = document.querySelector('input[name="tipoNacional"][value="uf"]');
+          if (ufRadio && ufRadio.checked) {
+            const ufSelect = document.getElementById('ufAlvo');
+            if (ufSelect && ufSelect.selectedOptions.length > 0) {
+              const primeiraUF = ufSelect.selectedOptions[0].value;
+              return { paisSigla: 'BRA', uf: primeiraUF };
+            }
+          }
+          const regiaoRadio = document.querySelector('input[name="tipoNacional"][value="regiao"]');
+          if (regiaoRadio && regiaoRadio.checked) {
+            return { paisSigla: 'BRA', uf: null };
+          }
+        }
+
+        return { paisSigla: 'BRA', uf: 'XX' };
+      }
+
+      function generateCampaignEloquaName(dataInicio, nome) {
+        const { paisSigla, uf } = getPaisUfFromAlvo();
+        const ufPart = uf ? `-${uf}` : '';
+
+        let mm = '00', yy = '00';
+        if (dataInicio) {
+          const dt = new Date(dataInicio + 'T00:00:00');
+          if (!isNaN(dt.getTime())) {
+            mm = String(dt.getMonth() + 1).padStart(2, '0');
+            yy = String(dt.getFullYear()).slice(-2);
+          }
+        }
+
+        const nomeLimitado = nome.substring(0, 34);
+        const nomeCompleto = `C[${paisSigla}${ufPart}.${mm}/${yy}.${nomeLimitado}]`;
+        return nomeCompleto.substring(0, 50);
+      }
+
+      // ==================== FUNÇÕES DE ATUALIZAÇÃO DOS CAMPOS ELOQUA ====================
+      function updateEventEloquaField() {
+        const nome = document.getElementById('nomeEvento')?.value.trim() || '';
+        const ano = document.getElementById('edicaoEvento')?.value || '';
+        const mes = document.getElementById('mesEvento')?.value || '';
+        const pais = document.getElementById('paisEvento')?.value || '';
+        const uf = document.getElementById('ufEvento')?.value || '';
+        const eloquaField = document.getElementById('nomeEloquaEvento');
+        if (eloquaField) {
+          eloquaField.value = generateEventEloquaName(pais, uf, mes, ano, nome);
+        }
+      }
+
+      function updateCampaignEloquaField() {
+        const nome = document.getElementById('nomeCampanha')?.value.trim() || '';
+        const dataInicio = document.getElementById('dataInicioCampanha')?.value || '';
+        const eloquaField = document.getElementById('nomeEloquaCampanha');
+        if (eloquaField) {
+          eloquaField.value = generateCampaignEloquaName(dataInicio, nome);
+        }
+      }
+
+      // ==================== FUNÇÕES DE TAGS ====================
+      async function gerarTagsComIA(event) {
+  let siteUrl = document.getElementById('siteEvento').value.trim();
+  console.log('URL original:', siteUrl);
+
+  if (!siteUrl) {
+    alert('Por favor, insira a URL do site primeiro.');
+    return;
+  }
+
+  // Se não começar com http:// ou https://, adiciona https:// por padrão
+  if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) {
+    siteUrl = 'https://' + siteUrl;
+    console.log('URL com https adicionado:', siteUrl);
+  }
+
+  // Validar URL com o construtor URL
+  try {
+    new URL(siteUrl);
+    console.log('URL válida');
+  } catch (e) {
+    console.error('Erro na validação da URL:', e);
+    alert('URL inválida. Verifique se o endereço está correto.');
+    return;
+  }
+
+  const btn = event.target;
+  const textoOriginal = btn.innerText;
+  btn.innerText = '🔍 Analisando site...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('http://localhost:5000/api/scrape-tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: siteUrl })
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      alert('Erro do backend: ' + data.error);
+      return;
+    }
+
+    if (data.tags && data.tags.length > 0) {
+      data.tags.forEach(tag => {
+        const existe = currentEventTags.some(t => t.texto.toLowerCase() === tag.toLowerCase());
+        if (!existe) {
+          currentEventTags.push({ texto: tag, automatica: true, geradoPorIA: true });
+        }
+      });
+      renderTags();
+      alert(`${data.tags.length} tag(s) gerada(s) com sucesso!`);
+    } else {
+      alert('Nenhuma tag identificada no site.');
+    }
+  } catch (error) {
+    console.error('Erro na requisição:', error);
+    alert('Erro ao conectar com o serviço de IA. Verifique se o backend está rodando.');
+  } finally {
+    btn.innerText = textoOriginal;
+    btn.disabled = false;
+  }
+}
+
+      function renderTags() {
+        const container = document.getElementById('tagsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        currentEventTags.forEach((tagObj, index) => {
+          const chip = document.createElement('span');
+          chip.className = tagObj.automatica ? 'tag-automatica' : 'tag-manual';
+          chip.innerHTML = `${tagObj.texto} <button type="button" class="tag-remove" onclick="removerTag(${index})">×</button>`;
+          container.appendChild(chip);
+        });
+      }
+
+      function atualizarTagsFromSite() {
+        const site = document.getElementById('siteEvento')?.value.trim() || '';
+        const novasAutomaticas = gerarTagsFromSite(site);
+        const manuais = currentEventTags.filter(t => !t.automatica);
+        const novas = novasAutomaticas.map(texto => ({ texto, automatica: true }));
+        currentEventTags = [...manuais, ...novas];
+        renderTags();
+      }
+
+      function adicionarTagManual() {
+        const input = document.getElementById('tagInputManual');
+        const texto = input.value.trim();
+        if (!texto) return;
+        const existe = currentEventTags.some(t => t.texto.toLowerCase() === texto.toLowerCase());
+        if (existe) {
+          alert('Tag já existe!');
+          return;
+        }
+        currentEventTags.push({ texto, automatica: false });
+        input.value = '';
+        renderTags();
+      }
+
+      function removerTag(index) {
+        currentEventTags.splice(index, 1);
+        renderTags();
+      }
+
+      // ==================== FUNÇÃO DE IA PARA GERAR TAGS ====================
+      async function gerarTagsComIA(event) {
+  let siteUrl = document.getElementById('siteEvento').value.trim();
+
+  if (!siteUrl) {
+    alert('Por favor, insira a URL do site primeiro.');
+    return;
+  }
+
+  // Se não começar com http:// ou https://, adiciona https:// por padrão
+  if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) {
+    siteUrl = 'https://' + siteUrl;
+  }
+
+  // Validar URL com o construtor URL (lança erro se inválida)
+  try {
+    new URL(siteUrl);
+  } catch {
+    alert('URL inválida. Verifique se o endereço está correto.');
+    return;
+  }
+
+  const btn = event.target;
+  const textoOriginal = btn.innerText;
+  btn.innerText = '🔍 Analisando site...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('http://localhost:5000/api/scrape-tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: siteUrl })
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      alert('Erro: ' + data.error);
+      return;
+    }
+
+    if (data.tags && data.tags.length > 0) {
+      data.tags.forEach(tag => {
+        const existe = currentEventTags.some(t => t.texto.toLowerCase() === tag.toLowerCase());
+        if (!existe) {
+          currentEventTags.push({ texto: tag, automatica: true, geradoPorIA: true });
+        }
+      });
+      renderTags();
+      alert(`${data.tags.length} tag(s) gerada(s) com sucesso!`);
+    } else {
+      alert('Nenhuma tag identificada no site.');
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    alert('Erro ao conectar com o serviço de IA. Verifique se o backend está rodando.');
+  } finally {
+    btn.innerText = textoOriginal;
+    btn.disabled = false;
+  }
+}
+
+      // ==================== FUNÇÕES DE RELACIONAMENTO ====================
+      function getRelatedCampaignsByEvent(eventId) {
+        const campaignIds = eventCampaignRelations
+          .filter(rel => rel.eventId === eventId)
+          .map(rel => rel.campaignId);
+        return campaigns.filter(c => campaignIds.includes(c.id));
+      }
+
+      function getRelatedEventsByCampaign(campaignId) {
+        const eventIds = eventCampaignRelations
+          .filter(rel => rel.campaignId === campaignId)
+          .map(rel => rel.eventId);
+        return events.filter(e => eventIds.includes(e.id));
+      }
+
+      function relationExists(eventId, campaignId) {
+        return eventCampaignRelations.some(rel => rel.eventId === eventId && rel.campaignId === campaignId);
+      }
+
+      function createRelation(eventId, campaignId, note = "") {
+        if (!eventId || !campaignId) return;
+        if (relationExists(eventId, campaignId)) return;
+        eventCampaignRelations.push({
+          id: `REL-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          eventId,
+          campaignId,
+          note,
+          createdAt: new Date().toISOString()
+        });
+        renderAll();
+      }
+
+      function removeRelation(eventId, campaignId) {
+        eventCampaignRelations = eventCampaignRelations.filter(
+          rel => !(rel.eventId === eventId && rel.campaignId === campaignId)
+        );
+        renderAll();
+      }
+
+      function linkSelectedCampaignsToEvent() {
+        const eventId = document.getElementById('editingEventId').value;
+        if (!eventId) {
+          alert('Salve o evento primeiro antes de vincular campanhas.');
+          return;
+        }
+        const select = document.getElementById('eventCampaignSelect');
+        const selectedOptions = Array.from(select.selectedOptions).map(opt => opt.value);
+        selectedOptions.forEach(campaignId => {
+          if (!relationExists(eventId, campaignId)) {
+            createRelation(eventId, campaignId, 'Vinculado via formulário de evento');
+          }
+        });
+        renderAll();
+      }
+
+      function linkSelectedEventsToCampaign() {
+        const campaignId = document.getElementById('editingCampaignId').value;
+        if (!campaignId) {
+          alert('Salve a campanha primeiro antes de vincular eventos.');
+          return;
+        }
+        const select = document.getElementById('campaignEventSelect');
+        const selectedOptions = Array.from(select.selectedOptions).map(opt => opt.value);
+        selectedOptions.forEach(eventId => {
+          if (!relationExists(eventId, campaignId)) {
+            createRelation(eventId, campaignId, 'Vinculado via formulário de campanha');
+          }
+        });
+        renderAll();
+      }
+
+      // ==================== POPULAR OS SELECTS MÚLTIPLOS ====================
+      function populateEventCampaignSelect() {
+        const select = document.getElementById('eventCampaignSelect');
+        if (!select) return;
+        const eventId = document.getElementById('editingEventId').value;
+        if (campaigns.length === 0) {
+          select.innerHTML = '<option value="">Nenhuma campanha cadastrada</option>';
+          return;
+        }
+        const linkedIds = eventId ? getRelatedCampaignsByEvent(eventId).map(c => c.id) : [];
+        select.innerHTML = campaigns.map(c => {
+          const selected = linkedIds.includes(c.id) ? 'selected' : '';
+          return `<option value="${c.id}" ${selected}>${c.code} - ${c.nome}</option>`;
+        }).join('');
+      }
+
+      function populateCampaignEventSelect() {
+        const select = document.getElementById('campaignEventSelect');
+        if (!select) return;
+        const campaignId = document.getElementById('editingCampaignId').value;
+        if (events.length === 0) {
+          select.innerHTML = '<option value="">Nenhum evento cadastrado</option>';
+          return;
+        }
+        const linkedIds = campaignId ? getRelatedEventsByCampaign(campaignId).map(e => e.id) : [];
+        select.innerHTML = events.map(e => {
+          const selected = linkedIds.includes(e.id) ? 'selected' : '';
+          return `<option value="${e.id}" ${selected}>${e.code} - ${e.nome}</option>`;
+        }).join('');
+      }
+
+      // ==================== FUNÇÕES PARA POPULAR PAÍS, UF, REGIÃO E TIPO DE EVENTO ====================
+      function populatePaisSelect() {
+        const select = document.getElementById('paisEvento');
+        if (!select) return;
+        const sortedPaises = [...paises].sort((a, b) => a.nome.localeCompare(b.nome));
+        select.innerHTML = sortedPaises.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+        select.value = 'BRASIL';
+      }
+
+      function populateUfSelect() {
+        const select = document.getElementById('ufEvento');
+        if (!select) return;
+        select.innerHTML = '<option value="">-</option>' + 
+          ufs.map(uf => `<option value="${uf.sigla}">${uf.sigla}</option>`).join('');
+      }
+
+      function populateUfAlvoSelect() {
+        const select = document.getElementById('ufAlvo');
+        if (!select) return;
+        select.innerHTML = ufs.map(uf => `<option value="${uf.sigla}">${uf.sigla}</option>`).join('');
+      }
+
+      function populateAreaInternacional() {
+        const container = document.getElementById('areaInternacional');
+        if (!container) return;
+        const paisesInternacionais = paises.filter(p => p.nome !== 'BRASIL');
+        container.innerHTML = paisesInternacionais.map(p => `
+          <label class="checkbox-label">
+            <input type="checkbox" name="paisesAlvo" value="${p.nome}" class="checkbox-input"> ${p.nome}
+          </label>
+        `).join('');
+      }
+
+      function populateAreaRegioes() {
+        const container = document.getElementById('areaNacionalRegiao');
+        if (!container) return;
+        container.innerHTML = regioes.map(r => `
+          <label class="checkbox-label">
+            <input type="checkbox" name="regiaoAlvo" value="${r.nome}" class="checkbox-input"> ${r.nome}
+          </label>
+        `).join('');
+      }
+
+      function populateTipoEventoSelect() {
+        const select = document.getElementById('tipoEvento');
+        if (!select) return;
+        if (Array.isArray(tiposDeEvento)) {
+          if (tiposDeEvento.length > 0 && typeof tiposDeEvento[0] === 'string') {
+            select.innerHTML = tiposDeEvento.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('');
+            select.value = tiposDeEvento[0];
+          } else if (tiposDeEvento.length > 0 && tiposDeEvento[0].nome) {
+            select.innerHTML = tiposDeEvento.map(tipo => `<option value="${tipo.nome}">${tipo.nome}</option>`).join('');
+            select.value = tiposDeEvento[0].nome;
+          }
+        }
+      }
+
+      // ==================== CONTROLE DE ABAS PRINCIPAIS ====================
+      function switchEntityTab(tab) {
+        currentEntityTab = tab;
+        currentPage = 1;
+
+        document.getElementById('panel-evento-form').classList.toggle('hidden', tab !== 'eventos');
+        document.getElementById('panel-campanha-form').classList.toggle('hidden', tab !== 'campanhas');
+        document.getElementById('panel-relacao-form').classList.toggle('hidden', tab !== 'relacoes');
+
+        ['eventos', 'campanhas', 'relacoes'].forEach(t => {
+          const btn = document.getElementById(`btn-entity-${t}`);
+          if (btn) {
+            btn.className = `px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${t === tab ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`;
+          }
+        });
+
+        updateRelationSelectors();
+        renderAll();
+      }
+
+      // ==================== CONTROLE DAS SUB-ABAS DO EVENTO ====================
+      function switchEventTab(tab) {
+        document.getElementById('event-tab-main').classList.toggle('hidden', tab !== 'main');
+        document.getElementById('event-tab-extra').classList.toggle('hidden', tab !== 'extra');
+
+        const btnMain = document.getElementById('btn-event-tab-main');
+        const btnExtra = document.getElementById('btn-event-tab-extra');
+        btnMain.className = `flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${tab === 'main' ? 'tab-active' : 'tab-inactive'}`;
+        btnExtra.className = `flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${tab === 'extra' ? 'tab-active' : 'tab-inactive'}`;
+
+        if (tab === 'extra') {
+          renderLinkedCampaignsInsideEventForm();
+          populateEventCampaignSelect();
+        }
+      }
+
+      // ==================== CONTROLE DA VIEW (LISTA / MATRIZ) ====================
+      function switchMainView(view) {
+        currentMainView = view;
+        document.getElementById('main-view-list').classList.toggle('hidden', view !== 'list');
+        document.getElementById('main-view-matrix').classList.toggle('hidden', view !== 'matrix');
+
+        const btnList = document.getElementById('btn-view-list');
+        const btnMatrix = document.getElementById('btn-view-matrix');
+        btnList.className = `px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${view === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`;
+        btnMatrix.className = `px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${view === 'matrix' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`;
+
+        renderAll();
+      }
+
+      // ==================== FUNÇÕES AUXILIARES DOS FORMULÁRIOS ====================
+      function togglePaisEvento() {
+        const isBrasil = document.getElementById('paisEvento').value.toUpperCase() === 'BRASIL';
+        document.getElementById('containerUFEvento').classList.toggle('hidden', !isBrasil);
+        document.getElementById('containerLocalidadeEvento').classList.toggle('hidden', isBrasil);
+      }
+
+      function syncEventLocationFields() {
+        document.getElementById('ufEventoSync').value = document.getElementById('ufEvento').value || '-';
+        document.getElementById('paisEventoSync').value = document.getElementById('paisEvento').value || '-';
+      }
+
+      function showModal(title, code) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalCode').innerText = code;
+        document.getElementById('modal').classList.remove('hidden');
+      }
+
+      function closeModal() {
+        document.getElementById('modal').classList.add('hidden');
+      }
+
+      // ==================== RESET DOS FORMULÁRIOS ====================
+      function resetEventForm() {
+        document.getElementById('eventForm').reset();
+        document.getElementById('editingEventId').value = '';
+        document.getElementById('btnSubmitEvento').innerText = 'Salvar Evento';
+        document.getElementById('btnSubmitEvento').className = 'w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg transition-all uppercase tracking-widest text-[10px]';
+        document.getElementById('eventFormTitle').innerText = 'Cadastro de Evento';
+        if (tiposDeEvento && tiposDeEvento.length > 0) {
+          if (typeof tiposDeEvento[0] === 'string') {
+            document.getElementById('tipoEvento').value = tiposDeEvento[0];
+          } else if (tiposDeEvento[0].nome) {
+            document.getElementById('tipoEvento').value = tiposDeEvento[0].nome;
+          }
+        }
+        currentEventTags = [];
+        renderTags();
+        togglePaisEvento();
+        syncEventLocationFields();
+        updateEventEloquaField();
+        renderLinkedCampaignsInsideEventForm();
+        populateEventCampaignSelect();
+      }
+
+      function resetCampaignForm() {
+        document.getElementById('campaignForm').reset();
+        document.getElementById('editingCampaignId').value = '';
+        document.getElementById('btnSubmitCampanha').innerText = 'Salvar Campanha';
+        document.getElementById('btnSubmitCampanha').className = 'w-full py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 shadow-lg transition-all uppercase tracking-widest text-[10px]';
+        document.getElementById('campaignFormTitle').innerText = 'Cadastro de Campanha';
+        document.getElementById('areaInternacional').classList.add('hidden');
+        document.getElementById('areaNacional').classList.add('hidden');
+        document.getElementById('areaNacionalRegiao').classList.add('hidden');
+        document.getElementById('areaNacionalUF').classList.add('hidden');
+        updateCampaignEloquaField();
+        renderLinkedEventsInsideCampaignForm();
+        populateCampaignEventSelect();
+      }
+
+      // ==================== CARREGAR DADOS PARA EDIÇÃO ====================
+      function loadEventForEdit(eventId) {
+        const eventObj = events.find(e => e.id === eventId);
+        if (!eventObj) return;
+
+        switchEntityTab('eventos');
+
+        document.getElementById('editingEventId').value = eventObj.id;
+        document.getElementById('nomeEvento').value = eventObj.nome;
+        document.getElementById('edicaoEvento').value = eventObj.ano;
+        document.getElementById('mesEvento').value = eventObj.mes;
+        document.getElementById('paisEvento').value = eventObj.pais;
+        togglePaisEvento();
+
+        if (eventObj.pais.toUpperCase() === 'BRASIL') {
+          document.getElementById('ufEvento').value = eventObj.local;
+          document.getElementById('localidadeInternacionalEvento').value = '';
+        } else {
+          document.getElementById('ufEvento').value = '';
+          document.getElementById('localidadeInternacionalEvento').value = eventObj.local;
+        }
+
+        document.getElementById('siteEvento').value = eventObj.site || '';
+        document.getElementById('descEvento').value = eventObj.descricao || '';
+        document.getElementById('dataInicioEvento').value = eventObj.dataInicio || '';
+        document.getElementById('dataFimEvento').value = eventObj.dataFim || '';
+
+        if (eventObj.tipoEvento) {
+          document.getElementById('tipoEvento').value = eventObj.tipoEvento;
+        }
+        if (eventObj.patrocinioSerpro) {
+          const radios = document.getElementsByName('patrocinioSerpro');
+          for (let radio of radios) {
+            if (radio.value === eventObj.patrocinioSerpro) {
+              radio.checked = true;
+              break;
+            }
+          }
+        }
+
+        if (eventObj.tags && Array.isArray(eventObj.tags)) {
+          currentEventTags = eventObj.tags.map(t => {
+            if (typeof t === 'string') return { texto: t, automatica: false };
+            return t;
+          });
+        } else {
+          currentEventTags = [];
+        }
+        renderTags();
+
+        document.getElementById('btnSubmitEvento').innerText = 'Atualizar Evento';
+        document.getElementById('btnSubmitEvento').className = 'w-full py-4 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-lg transition-all uppercase tracking-widest text-[10px]';
+        document.getElementById('eventFormTitle').innerText = `${eventObj.code} - ${eventObj.nome}`;
+
+        syncEventLocationFields();
+        updateEventEloquaField();
+        renderLinkedCampaignsInsideEventForm();
+        populateEventCampaignSelect();
+      }
+
+      function loadCampaignForEdit(campaignId) {
+        const campaignObj = campaigns.find(c => c.id === campaignId);
+        if (!campaignObj) return;
+
+        switchEntityTab('campanhas');
+
+        document.getElementById('editingCampaignId').value = campaignObj.id;
+        document.getElementById('nomeCampanha').value = campaignObj.nome;
+        document.getElementById('dataInicioCampanha').value = campaignObj.dataInicio || '';
+
+        document.getElementById('btnSubmitCampanha').innerText = 'Atualizar Campanha';
+        document.getElementById('btnSubmitCampanha').className = 'w-full py-4 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-lg transition-all uppercase tracking-widest text-[10px]';
+        document.getElementById('campaignFormTitle').innerText = `${campaignObj.code} - ${campaignObj.nome}`;
+
+        updateCampaignEloquaField();
+        renderLinkedEventsInsideCampaignForm();
+        populateCampaignEventSelect();
+      }
+
+      // ==================== RENDER DOS VÍNCULOS DENTRO DOS FORMULÁRIOS ====================
+      function renderLinkedCampaignsInsideEventForm() {
+        const container = document.getElementById('eventCampaignLinks');
+        const currentEventId = document.getElementById('editingEventId').value;
+
+        if (!currentEventId) {
+          container.innerHTML = `<span class="text-xs text-slate-400">Salve o evento primeiro para vincular campanhas.</span>`;
+          return;
+        }
+
+        const linkedCampaigns = getRelatedCampaignsByEvent(currentEventId);
+
+        if (linkedCampaigns.length === 0) {
+          container.innerHTML = `<span class="text-xs text-slate-400">Nenhuma campanha vinculada.</span>`;
+          return;
+        }
+
+        container.innerHTML = linkedCampaigns.map(c => `
+          <span class="chip chip-green">
+            ${c.code} · ${c.nome}
+            <button type="button" class="ml-2 opacity-60 hover:opacity-100"
+              onclick="removeRelation('${currentEventId}','${c.id}'); renderLinkedCampaignsInsideEventForm(); populateEventCampaignSelect(); renderAll();">
+              ×
+            </button>
+          </span>
+        `).join('');
+      }
+
+      function renderLinkedEventsInsideCampaignForm() {
+        const container = document.getElementById('campaignEventLinks');
+        const currentCampaignId = document.getElementById('editingCampaignId').value;
+
+        if (!currentCampaignId) {
+          container.innerHTML = `<span class="text-xs text-slate-400">Salve a campanha primeiro para vincular eventos.</span>`;
+          return;
+        }
+
+        const linkedEvents = getRelatedEventsByCampaign(currentCampaignId);
+
+        if (linkedEvents.length === 0) {
+          container.innerHTML = `<span class="text-xs text-slate-400">Nenhum evento vinculado.</span>`;
+          return;
+        }
+
+        container.innerHTML = linkedEvents.map(e => `
+          <span class="chip chip-blue">
+            ${e.code} · ${e.nome}
+            <button type="button" class="ml-2 opacity-60 hover:opacity-100"
+              onclick="removeRelation('${e.id}','${currentCampaignId}'); renderLinkedEventsInsideCampaignForm(); populateCampaignEventSelect(); renderAll();">
+              ×
+            </button>
+          </span>
+        `).join('');
+      }
+
+      // ==================== ATUALIZAR OS SELECTS DE RELACIONAMENTO ====================
+      function updateRelationSelectors() {
+        const eventSelectRel = document.getElementById('relationEventSelectRel');
+        const campaignSelectRel = document.getElementById('relationCampaignSelectRel');
+
+        if (eventSelectRel) {
+          eventSelectRel.innerHTML = events.length
+            ? events.map(e => `<option value="${e.id}">${e.code} · ${e.nome}</option>`).join('')
+            : `<option value="">Nenhum evento cadastrado</option>`;
+        }
+
+        if (campaignSelectRel) {
+          campaignSelectRel.innerHTML = campaigns.length
+            ? campaigns.map(c => `<option value="${c.id}">${c.code} · ${c.nome}</option>`).join('')
+            : `<option value="">Nenhuma campanha cadastrada</option>`;
+        }
+      }
+
+      // ==================== SUBMISSÃO DOS FORMULÁRIOS ====================
+      document.getElementById('eventForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const editId = document.getElementById('editingEventId').value;
+        const nome = document.getElementById('nomeEvento').value.trim();
+        const ano = document.getElementById('edicaoEvento').value;
+        const mes = document.getElementById('mesEvento').value;
+        const pais = document.getElementById('paisEvento').value;
+        const uf = document.getElementById('ufEvento').value;
+        const localIntl = document.getElementById('localidadeInternacionalEvento').value.trim();
+        const local = pais.toUpperCase() === 'BRASIL' ? uf : localIntl;
+        const descricao = document.getElementById('descEvento').value.trim();
+        const dataInicio = document.getElementById('dataInicioEvento').value;
+        const dataFim = document.getElementById('dataFimEvento').value;
+        const site = document.getElementById('siteEvento').value.trim();
+        const tipoEvento = document.getElementById('tipoEvento').value;
+        const patrocinioSerpro = document.querySelector('input[name="patrocinioSerpro"]:checked')?.value || 'nao';
+        const nome_eloqua = document.getElementById('nomeEloquaEvento').value;
+
+        const tags = currentEventTags;
+
+        const duplicate = events.find(ev =>
+          ev.id !== editId &&
+          ev.nome.toLowerCase() === nome.toLowerCase() &&
+          String(ev.ano) === String(ano) &&
+          ev.mes === mes
+        );
+
+        if (duplicate) {
+          const confirmar = confirm(`Já existe um evento com mesmo nome, ano e mês: ${duplicate.code}. Deseja editar esse registro?`);
+          if (confirmar) {
+            loadEventForEdit(duplicate.id);
+          }
+          return;
+        }
+
+        const eventObj = {
+          id: editId || `event-${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`,
+          code: editId ? events.find(ev => ev.id === editId).code : generateEventCode(),
+          nome,
+          ano,
+          mes,
+          pais,
+          local,
+          descricao,
+          dataInicio,
+          dataFim,
+          site,
+          tipoEvento,
+          patrocinioSerpro,
+          tags,
+          nome_eloqua,
+          createdAt: editId ? events.find(ev => ev.id === editId).createdAt : new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (editId) {
+          const idx = events.findIndex(ev => ev.id === editId);
+          events[idx] = eventObj;
+          showModal('Evento atualizado', eventObj.code);
+        } else {
+          events.unshift(eventObj);
+          showModal('Evento criado', eventObj.code);
+        }
+
+        resetEventForm();
+        updateRelationSelectors();
+        renderAll();
+      });
+
+      document.getElementById('campaignForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const editId = document.getElementById('editingCampaignId').value;
+        const nome = document.getElementById('nomeCampanha').value.trim();
+        const dataInicio = document.getElementById('dataInicioCampanha').value;
+        const nome_eloqua = document.getElementById('nomeEloquaCampanha').value;
+
+        const duplicate = campaigns.find(c =>
+          c.id !== editId &&
+          c.nome.toLowerCase() === nome.toLowerCase()
+        );
+
+        if (duplicate) {
+          const confirmar = confirm(`Já existe uma campanha com mesmo nome: ${duplicate.code}. Deseja editar esse registro?`);
+          if (confirmar) {
+            loadCampaignForEdit(duplicate.id);
+          }
+          return;
+        }
+
+        const campaignObj = {
+          id: editId || `campaign-${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`,
+          code: editId ? campaigns.find(c => c.id === editId).code : generateCampaignCode(),
+          nome,
+          dataInicio,
+          nome_eloqua,
+          createdAt: editId ? campaigns.find(c => c.id === editId).createdAt : new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (editId) {
+          const idx = campaigns.findIndex(c => c.id === editId);
+          campaigns[idx] = campaignObj;
+          showModal('Campanha atualizada', campaignObj.code);
+        } else {
+          campaigns.unshift(campaignObj);
+          showModal('Campanha criada', campaignObj.code);
+        }
+
+        resetCampaignForm();
+        updateRelationSelectors();
+        renderAll();
+      });
+
+      document.getElementById('relationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const eventId = document.getElementById('relationEventSelectRel').value;
+        const campaignId = document.getElementById('relationCampaignSelectRel').value;
+        const note = document.getElementById('relationNote').value.trim();
+
+        if (!eventId || !campaignId) {
+          alert('Selecione um evento e uma campanha.');
+          return;
+        }
+
+        if (relationExists(eventId, campaignId)) {
+          alert('Esse vínculo já existe.');
+          return;
+        }
+
+        createRelation(eventId, campaignId, note);
+        document.getElementById('relationNote').value = '';
+        showModal('Vínculo criado', 'Relação evento-campanha');
+        renderAll();
+      });
+
+      // ==================== FUNÇÕES DE FILTRO E RENDER ====================
+      function getFilteredData() {
+        const q = document.getElementById('gridSearch').value.toLowerCase().trim();
+
+        if (currentEntityTab === 'eventos') {
+          return events.filter(e =>
+            e.nome.toLowerCase().includes(q) ||
+            e.code.toLowerCase().includes(q) ||
+            (e.local || '').toLowerCase().includes(q) ||
+            (e.nome_eloqua || '').toLowerCase().includes(q) ||
+            (e.tipoEvento || '').toLowerCase().includes(q) ||
+            (e.tags && e.tags.some(t => {
+              const texto = typeof t === 'string' ? t : t.texto;
+              return texto.toLowerCase().includes(q);
+            }))
+          );
+        }
+
+        if (currentEntityTab === 'campanhas') {
+          return campaigns.filter(c =>
+            c.nome.toLowerCase().includes(q) ||
+            c.code.toLowerCase().includes(q) ||
+            (c.nome_eloqua || '').toLowerCase().includes(q)
+          );
+        }
+
+        return eventCampaignRelations.filter(rel => {
+          const eventObj = events.find(e => e.id === rel.eventId);
+          const campaignObj = campaigns.find(c => c.id === rel.campaignId);
+          const text = [
+            rel.id,
+            rel.note || '',
+            eventObj?.nome || '',
+            eventObj?.code || '',
+            eventObj?.nome_eloqua || '',
+            campaignObj?.nome || '',
+            campaignObj?.code || '',
+            campaignObj?.nome_eloqua || ''
+          ].join(' ').toLowerCase();
+          return text.includes(q);
+        });
+      }
+
+      function renderTableHead() {
+        const head = document.getElementById('tableHeadRow');
+
+        if (currentEntityTab === 'eventos') {
+          head.innerHTML = `
+            <th class="px-8 py-5">Código</th>
+            <th class="px-8 py-5">Evento / Período</th>
+            <th class="px-8 py-5">Localização</th>
+            <th class="px-8 py-5">Nome Eloqua</th>
+            <th class="px-8 py-5">Tipo</th>
+            <th class="px-8 py-5">Patrocínio</th>
+            <th class="px-8 py-5">Tags</th>
+            <th class="px-8 py-5">Campanhas</th>
+            <th class="px-8 py-5">Ações</th>
+          `;
+        } else if (currentEntityTab === 'campanhas') {
+          head.innerHTML = `
+            <th class="px-8 py-5">Código</th>
+            <th class="px-8 py-5">Campanha</th>
+            <th class="px-8 py-5">Período</th>
+            <th class="px-8 py-5">Nome Eloqua</th>
+            <th class="px-8 py-5">Eventos</th>
+            <th class="px-8 py-5">Ações</th>
+          `;
+        } else {
+          head.innerHTML = `
+            <th class="px-8 py-5">Evento</th>
+            <th class="px-8 py-5">Campanha</th>
+            <th class="px-8 py-5">Observação</th>
+            <th class="px-8 py-5">Criado em</th>
+            <th class="px-8 py-5">Ações</th>
+          `;
+        }
+      }
+
+      function renderTableBody(data) {
+        const body = document.getElementById('gridBody');
+
+        if (currentEntityTab === 'eventos') {
+          body.innerHTML = data.map(e => {
+            const relCampaigns = getRelatedCampaignsByEvent(e.id);
+            const tagsHtml = e.tags && e.tags.length 
+              ? e.tags.map(t => {
+                  const texto = typeof t === 'string' ? t : t.texto;
+                  return `<span class="chip chip-blue text-[9px]">${texto}</span>`;
+                }).join(' ')
+              : '<span class="text-xs text-slate-400">-</span>';
+            return `
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-8 py-5 font-mono font-bold text-blue-600">${e.code}</td>
+                <td class="px-8 py-5">
+                  <div class="font-bold text-slate-800 leading-tight">${e.nome}</div>
+                  <div class="text-[10px] text-slate-400">${e.mes} / ${e.ano}</div>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="font-semibold text-slate-600">${e.local || '-'}</div>
+                  <div class="text-[10px] text-slate-400">${e.pais || '-'}</div>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="text-[10px] text-slate-500 font-mono bg-slate-50 p-2 rounded-lg border border-slate-100 break-all max-w-[220px] leading-relaxed">
+                    ${e.nome_eloqua || '-'}
+                  </div>
+                </td>
+                <td class="px-8 py-5">
+                  <span class="chip chip-slate">${e.tipoEvento || '-'}</span>
+                </td>
+                <td class="px-8 py-5">
+                  <span class="chip ${e.patrocinioSerpro === 'sim' ? 'chip-green' : 'chip-slate'}">${e.patrocinioSerpro === 'sim' ? 'Sim' : 'Não'}</span>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="flex flex-wrap gap-1 max-w-[200px]">${tagsHtml}</div>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="flex flex-wrap gap-1 max-w-[220px]">
+                    ${relCampaigns.length
+                      ? relCampaigns.map(c => `<span class="chip chip-green">${c.code}</span>`).join('')
+                      : `<span class="text-xs text-slate-400">Sem campanha</span>`
+                    }
+                  </div>
+                </td>
+                <td class="px-8 py-5">
+                  <button onclick="loadEventForEdit('${e.id}')"
+                    class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+          return;
+        }
+
+        if (currentEntityTab === 'campanhas') {
+          body.innerHTML = data.map(c => {
+            const relEvents = getRelatedEventsByCampaign(c.id);
+            return `
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-8 py-5 font-mono font-bold text-green-600">${c.code}</td>
+                <td class="px-8 py-5">
+                  <div class="font-bold text-slate-800 leading-tight">${c.nome}</div>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="text-[10px] text-slate-400">${c.dataInicio || '-'}</div>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="text-[10px] text-slate-500 font-mono bg-slate-50 p-2 rounded-lg border border-slate-100 break-all max-w-[220px] leading-relaxed">
+                    ${c.nome_eloqua || '-'}
+                  </div>
+                </td>
+                <td class="px-8 py-5">
+                  <div class="flex flex-wrap gap-1 max-w-[220px]">
+                    ${relEvents.length
+                      ? relEvents.map(e => `<span class="chip chip-blue">${e.code}</span>`).join('')
+                      : `<span class="text-xs text-slate-400">Sem evento</span>`
+                    }
+                  </div>
+                </td>
+                <td class="px-8 py-5">
+                  <button onclick="loadCampaignForEdit('${c.id}')"
+                    class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+          return;
+        }
+
+        body.innerHTML = data.map(rel => {
+          const eventObj = events.find(e => e.id === rel.eventId);
+          const campaignObj = campaigns.find(c => c.id === rel.campaignId);
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-8 py-5">
+                <div class="font-bold text-slate-800">${eventObj ? eventObj.code : 'Evento removido'}</div>
+                <div class="text-[10px] text-slate-400">${eventObj ? eventObj.nome : '-'}</div>
+              </td>
+              <td class="px-8 py-5">
+                <div class="font-bold text-slate-800">${campaignObj ? campaignObj.code : 'Campanha removida'}</div>
+                <div class="text-[10px] text-slate-400">${campaignObj ? campaignObj.nome : '-'}</div>
+              </td>
+              <td class="px-8 py-5 text-slate-600">${rel.note || '-'}</td>
+              <td class="px-8 py-5 text-slate-500 text-xs">${new Date(rel.createdAt).toLocaleString('pt-BR')}</td>
+              <td class="px-8 py-5">
+                <button onclick="removeRelation('${rel.eventId}','${rel.campaignId}'); renderLinkedCampaignsInsideEventForm(); renderLinkedEventsInsideCampaignForm(); populateEventCampaignSelect(); populateCampaignEventSelect();"
+                  class="px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100">
+                  Desvincular
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function renderPagination(fullData) {
+        const pagCon = document.getElementById('paginationControls');
+        const totalPages = Math.ceil(fullData.length / itemsPerPage);
+        pagCon.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement('button');
+          btn.innerText = i;
+          btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+          btn.onclick = () => {
+            currentPage = i;
+            renderAll();
+          };
+          pagCon.appendChild(btn);
+        }
+      }
+
+      function renderMatrix() {
+        const container = document.getElementById('matrixContainer');
+
+        if (currentEntityTab !== 'relacoes') {
+          container.innerHTML = `
+            <div class="bg-white border border-slate-200 rounded-2xl p-8 text-slate-500 text-sm">
+              A matriz fica mais útil na aba de Relacionamentos.
+            </div>
+          `;
+          return;
+        }
+
+        if (!events.length || !campaigns.length) {
+          container.innerHTML = `
+            <div class="bg-white border border-slate-200 rounded-2xl p-8 text-slate-500 text-sm">
+              Cadastre ao menos um evento e uma campanha para visualizar a matriz n:n.
+            </div>
+          `;
+          return;
+        }
+
+        const q = document.getElementById('gridSearch').value.toLowerCase().trim();
+
+        const filteredEvents = events.filter(e =>
+          !q || e.nome.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || (e.nome_eloqua || '').toLowerCase().includes(q)
+        );
+        const filteredCampaigns = campaigns.filter(c =>
+          !q || c.nome.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.nome_eloqua || '').toLowerCase().includes(q)
+        );
+
+        let html = `
+          <div class="overflow-auto rounded-2xl border border-slate-200 bg-white">
+            <table class="min-w-full border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50">
+                  <th class="sticky left-0 z-10 bg-slate-50 border-b border-r border-slate-200 px-4 py-3 text-left text-[10px] uppercase font-black text-slate-400">
+                    Eventos \\ Campanhas
+                  </th>
+                  ${filteredCampaigns.map(c => `
+                    <th class="border-b border-r border-slate-200 px-4 py-3 text-[10px] uppercase font-black text-slate-400 min-w-[220px]">
+                      <div class="text-green-600">${c.code}</div>
+                      <div class="normal-case text-slate-700 font-semibold mt-1">${c.nome}</div>
+                      <div class="normal-case text-slate-400 font-mono text-[10px] mt-1 break-all">${c.nome_eloqua || '-'}</div>
+                    </th>
+                  `).join('')}
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        filteredEvents.forEach(e => {
+          html += `
+            <tr>
+              <td class="sticky left-0 z-10 bg-white border-b border-r border-slate-200 px-4 py-3 min-w-[280px]">
+                <div class="text-blue-600 font-black text-xs">${e.code}</div>
+                <div class="text-slate-700 font-semibold">${e.nome}</div>
+                <div class="text-slate-400 font-mono text-[10px] mt-1 break-all">${e.nome_eloqua || '-'}</div>
+              </td>
+          `;
+
+          filteredCampaigns.forEach(c => {
+            const exists = relationExists(e.id, c.id);
+            html += `
+              <td class="border-b border-r border-slate-200 px-4 py-3 text-center">
+                ${exists
+                  ? `<button onclick="removeRelation('${e.id}','${c.id}'); renderAll();"
+                      class="px-3 py-1 rounded-lg bg-green-100 text-green-700 text-xs font-black hover:bg-green-200">
+                      Vinculado
+                    </button>`
+                  : `<button onclick="createRelation('${e.id}','${c.id}'); renderAll();"
+                      class="px-3 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-black hover:bg-slate-200">
+                      Vincular
+                    </button>`
+                }
+              </td>
+            `;
+          });
+
+          html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+      }
+
+      function renderAll() {
+        const data = getFilteredData();
+        document.getElementById('gridCount').innerText = `${data.length} itens`;
+
+        renderTableHead();
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const pageData = data.slice(start, start + itemsPerPage);
+
+        renderTableBody(pageData);
+        renderPagination(data);
+        renderMatrix();
+        updateRelationSelectors();
+
+        renderLinkedCampaignsInsideEventForm();
+        renderLinkedEventsInsideCampaignForm();
+        populateEventCampaignSelect();
+        populateCampaignEventSelect();
+      }
+
+      // ==================== AUTOCOMPLETE ====================
+      function setupAutocomplete() {
+        const nomeEventoInput = document.getElementById('nomeEvento');
+        const eventList = document.getElementById('autocomplete-event-list');
+        nomeEventoInput.addEventListener('input', () => {
+          const val = nomeEventoInput.value.trim().toLowerCase();
+          eventList.innerHTML = '';
+
+          if (!val) {
+            eventList.classList.add('hidden');
+            return;
+          }
+
+          const matches = [...new Set(events.map(e => e.nome))]
+            .filter(name => name.toLowerCase().includes(val))
+            .slice(0, 8);
+
+          if (!matches.length) {
+            eventList.classList.add('hidden');
+            return;
+          }
+
+          eventList.classList.remove('hidden');
+          matches.forEach(match => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.textContent = match;
+            div.onclick = () => {
+              nomeEventoInput.value = match;
+              eventList.classList.add('hidden');
+              updateEventEloquaField();
+            };
+            eventList.appendChild(div);
+          });
+        });
+
+        const nomeCampanhaInput = document.getElementById('nomeCampanha');
+        const campaignList = document.getElementById('autocomplete-campaign-list');
+        nomeCampanhaInput.addEventListener('input', () => {
+          const val = nomeCampanhaInput.value.trim().toLowerCase();
+          campaignList.innerHTML = '';
+
+          if (!val) {
+            campaignList.classList.add('hidden');
+            return;
+          }
+
+          const matches = [...new Set(campaigns.map(c => c.nome))]
+            .filter(name => name.toLowerCase().includes(val))
+            .slice(0, 8);
+
+          if (!matches.length) {
+            campaignList.classList.add('hidden');
+            return;
+          }
+
+          campaignList.classList.remove('hidden');
+          matches.forEach(match => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.textContent = match;
+            div.onclick = () => {
+              nomeCampanhaInput.value = match;
+              campaignList.classList.add('hidden');
+              updateCampaignEloquaField();
+            };
+            campaignList.appendChild(div);
+          });
+        });
+
+        document.addEventListener('click', (e) => {
+          if (e.target !== nomeEventoInput) eventList?.classList.add('hidden');
+          if (e.target !== nomeCampanhaInput) campaignList?.classList.add('hidden');
+        });
+      }
+
+      // ==================== MOCK DATA ====================
+      function generateMockData() {
+        events = [
+          {
+            id: 'event-1',
+            code: 'EVT-1000',
+            nome: 'Fórum GovTech Brasília',
+            ano: '2026',
+            mes: 'Abril',
+            pais: 'BRASIL',
+            local: 'DF',
+            descricao: 'Evento institucional com foco em governo digital',
+            site: 'https://www.serpro.gov.br',
+            dataInicio: '2026-04-10',
+            dataFim: '2026-04-12',
+            tipoEvento: 'Congresso',
+            patrocinioSerpro: 'sim',
+            tags: [
+              { texto: 'SERPRO', automatica: true },
+              { texto: 'Governo Federal', automatica: true },
+              { texto: 'Tag Manual', automatica: false }
+            ],
+            nome_eloqua: generateEventEloquaName('BRASIL', 'DF', 'Abril', '2026', 'Fórum GovTech Brasília'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'event-2',
+            code: 'EVT-1001',
+            nome: 'Expo Dados Públicos',
+            ano: '2026',
+            mes: 'Junho',
+            pais: 'BRASIL',
+            local: 'SP',
+            descricao: 'Feira com foco em dados e plataformas públicas',
+            site: 'https://www.exemplo.com',
+            dataInicio: '2026-06-05',
+            dataFim: '2026-06-07',
+            tipoEvento: 'Feira',
+            patrocinioSerpro: 'nao',
+            tags: [],
+            nome_eloqua: generateEventEloquaName('BRASIL', 'SP', 'Junho', '2026', 'Expo Dados Públicos'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'event-3',
+            code: 'EVT-1002',
+            nome: 'Congresso Internacional de Inovação',
+            ano: '2026',
+            mes: 'Setembro',
+            pais: 'PORTUGAL',
+            local: 'Lisboa',
+            descricao: 'Evento internacional',
+            site: '',
+            dataInicio: '2026-09-15',
+            dataFim: '2026-09-18',
+            tipoEvento: 'Congresso',
+            patrocinioSerpro: 'nao',
+            tags: [],
+            nome_eloqua: generateEventEloquaName('PORTUGAL', '', 'Setembro', '2026', 'Congresso Internacional de Inovação'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+
+        campaigns = [
+          {
+            id: 'campaign-1',
+            code: 'CMP-1000',
+            nome: 'Campanha Gov Digital 2026',
+            dataInicio: '2026-03-20',
+            nome_eloqua: generateCampaignEloquaName('2026-03-20', 'Campanha Gov Digital 2026'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'campaign-2',
+            code: 'CMP-1001',
+            nome: 'Awareness Internacional',
+            dataInicio: '2026-08-01',
+            nome_eloqua: generateCampaignEloquaName('2026-08-01', 'Awareness Internacional'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'campaign-3',
+            code: 'CMP-1002',
+            nome: 'Nutrição Base Pública',
+            dataInicio: '2026-05-01',
+            nome_eloqua: generateCampaignEloquaName('2026-05-01', 'Nutrição Base Pública'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+
+        eventCampaignRelations = [
+          {
+            id: 'REL-1',
+            eventId: 'event-1',
+            campaignId: 'campaign-1',
+            note: 'Campanha principal do evento',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'REL-2',
+            eventId: 'event-2',
+            campaignId: 'campaign-1',
+            note: 'Reaproveitamento da mesma campanha em outro evento',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'REL-3',
+            eventId: 'event-3',
+            campaignId: 'campaign-2',
+            note: 'Ação internacional',
+            createdAt: new Date().toISOString()
+          }
+        ];
+
+        eventSequential = 1003;
+        campaignSequential = 1003;
+      }
+
+      // ==================== INICIALIZAÇÃO ====================
+      generateMockData();
+
+      populatePaisSelect();
+      populateUfSelect();
+      populateUfAlvoSelect();
+      populateAreaInternacional();
+      populateAreaRegioes();
+      populateTipoEventoSelect();
+
+      document.getElementById('nomeEvento')?.addEventListener('input', updateEventEloquaField);
+      document.getElementById('edicaoEvento')?.addEventListener('input', updateEventEloquaField);
+      document.getElementById('mesEvento')?.addEventListener('change', updateEventEloquaField);
+      document.getElementById('paisEvento')?.addEventListener('change', updateEventEloquaField);
+      document.getElementById('ufEvento')?.addEventListener('change', updateEventEloquaField);
+
+      document.getElementById('nomeCampanha')?.addEventListener('input', updateCampaignEloquaField);
+      document.getElementById('dataInicioCampanha')?.addEventListener('change', updateCampaignEloquaField);
+      document.getElementById('alvoInternacional')?.addEventListener('change', updateCampaignEloquaField);
+      document.getElementById('alvoNacional')?.addEventListener('change', updateCampaignEloquaField);
+      document.querySelectorAll('#areaInternacional input').forEach(cb => cb.addEventListener('change', updateCampaignEloquaField));
+      document.querySelectorAll('input[name="tipoNacional"]').forEach(radio => radio.addEventListener('change', updateCampaignEloquaField));
+      document.getElementById('ufAlvo')?.addEventListener('change', updateCampaignEloquaField);
+
+      togglePaisEvento();
+      syncEventLocationFields();
+      updateEventEloquaField();
+      updateCampaignEloquaField();
+      updateRelationSelectors();
+      setupAutocomplete();
+      renderAll();
+
+      // Expõe funções globais para os atributos onclick
+      window.switchEntityTab = switchEntityTab;
+      window.switchEventTab = switchEventTab;
+      window.switchMainView = switchMainView;
+      window.togglePaisEvento = togglePaisEvento;
+      window.syncEventLocationFields = syncEventLocationFields;
+      window.closeModal = closeModal;
+      window.loadEventForEdit = loadEventForEdit;
+      window.loadCampaignForEdit = loadCampaignForEdit;
+      window.removeRelation = removeRelation;
+      window.createRelation = createRelation;
+      window.toggleRegistroAlvo = function(tipo) {
+        if (tipo === 'internacional') {
+          const isChecked = document.getElementById('alvoInternacional').checked;
+          document.getElementById('areaInternacional').classList.toggle('hidden', !isChecked);
+        } else {
+          const isChecked = document.getElementById('alvoNacional').checked;
+          document.getElementById('areaNacional').classList.toggle('hidden', !isChecked);
+        }
+        updateCampaignEloquaField();
+      };
+      window.toggleNacionalSubArea = function(sub) {
+        document.getElementById('areaNacionalRegiao').classList.toggle('hidden', sub !== 'regiao');
+        document.getElementById('areaNacionalUF').classList.toggle('hidden', sub !== 'uf');
+        updateCampaignEloquaField();
+      };
+      window.renderAll = renderAll;
+      window.linkSelectedCampaignsToEvent = linkSelectedCampaignsToEvent;
+      window.linkSelectedEventsToCampaign = linkSelectedEventsToCampaign;
+      window.renderLinkedCampaignsInsideEventForm = renderLinkedCampaignsInsideEventForm;
+      window.renderLinkedEventsInsideCampaignForm = renderLinkedEventsInsideCampaignForm;
+      window.populateEventCampaignSelect = populateEventCampaignSelect;
+      window.populateCampaignEventSelect = populateCampaignEventSelect;
+      window.atualizarTagsFromSite = atualizarTagsFromSite;
+      window.adicionarTagManual = adicionarTagManual;
+      window.removerTag = removerTag;
+      window.gerarTagsComIA = gerarTagsComIA; // <-- EXPOR A FUNÇÃO DA IA
+    })();
+  </script>
+</body>
+</html>
+```
