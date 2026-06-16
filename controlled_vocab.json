@@ -1,0 +1,266 @@
+{
+  "categorias": [
+    {
+      "nome": "Presença do Serpro",
+      "tags": [
+        { "rotulo": "Anfitrião", "sinonimos": ["serpro day", "realizado pelo serpro", "organização serpro"] },
+        { "rotulo": "Patrocinador", "sinonimos": ["patrocínio serpro", "apoio serpro", "sponsor serpro"] },
+        { "rotulo": "Expositor", "sinonimos": ["stand serpro", "estande serpro", "expositor serpro"] },
+        { "rotulo": "Palestrante", "sinonimos": ["palestra serpro", "serpro palestra", "apresentação serpro"] }
+      ]
+    },
+    {
+      "nome": "Temas Estratégicos",
+      "tags": [
+        { "rotulo": "Transformação Digital", "sinonimos": ["modernização", "digitalização", "governo digital", "serviços públicos digitais"] },
+        { "rotulo": "Cidades Inteligentes", "sinonimos": ["smart cities", "municípios inteligentes", "urbanismo digital"] },
+        { "rotulo": "Reforma Tributária", "sinonimos": ["IBS", "nova tributação", "LC 214/25", "comitê gestor", "arrecadação"] },
+        { "rotulo": "Segurança Cibernética", "sinonimos": ["cybersegurança", "proteção de dados", "integridade digital", "antifraude"] },
+        { "rotulo": "Inclusão Digital", "sinonimos": ["acesso digital", "inclusão social", "praças digitais"] }
+      ]
+    },
+    {
+      "nome": "Público-Alvo",
+      "tags": [
+        { "rotulo": "Governo Federal", "sinonimos": ["RFB", "receita federal", "ministérios", "órgãos federais"] },
+        { "rotulo": "Governo Estadual", "sinonimos": ["secretarias estaduais", "governos estaduais"] },
+        { "rotulo": "Municípios", "sinonimos": ["prefeituras", "gestores municipais", "cidades", "administração municipal"] },
+        { "rotulo": "Setor Privado", "sinonimos": ["empresas", "iniciativa privada", "corporativo"] }
+      ]
+    },
+    {
+      "nome": "Tipo de Evento",
+      "tags": [
+        { "rotulo": "Feira/Exposição", "sinonimos": ["expo", "mostra", "feira de negócios"] },
+        { "rotulo": "Congresso/Conferência", "sinonimos": ["simpósio", "encontro", "fórum", "seminário"] },
+        { "rotulo": "Workshop/Treinamento", "sinonimos": ["oficina", "hands-on", "capacitação", "treinamento técnico"] },
+        { "rotulo": "Hackathon", "sinonimos": ["maratona de programação", "coding challenge"] }
+      ]
+    },
+    {
+      "nome": "Tecnologias/Soluções",
+      "tags": [
+        { "rotulo": "Inteligência Artificial", "sinonimos": ["IA", "machine learning", "deep learning", "IA generativa", "chatbots"] },
+        { "rotulo": "Nuvem (Cloud)", "sinonimos": ["multicloud", "serpro multicloud", "computação em nuvem", "SaaS"] },
+        { "rotulo": "Dados", "sinonimos": ["big data", "bases de dados", "ciência de dados", "dados confiáveis"] },
+        { "rotulo": "Automação", "sinonimos": ["bots", "serprobots", "RPA", "automação de processos"] },
+        { "rotulo": "Blockchain", "sinonimos": ["livro razão", "registro distribuído", "rastreabilidade"] }
+      ]
+    },
+    {
+      "nome": "Produtos Serpro",
+      "tags": [
+        { "rotulo": "Serpro MultiCloud", "sinonimos": ["multicloud serpro", "nuvem pública", "nuvem privada"] },
+        { "rotulo": "Serpro Bots", "sinonimos": ["chatbots serpro", "atendimento automatizado"] },
+        { "rotulo": "Dialoga", "sinonimos": ["plataforma de atendimento", "dialoga serpro"] },
+        { "rotulo": "Assinador Serpro", "sinonimos": ["assinatura digital", "assinador gov.br"] },
+        { "rotulo": "REDESIM", "sinonimos": ["registro empresarial", "simples nacional"] }
+      ]
+    },
+    {
+      "nome": "Potencial de Negócio",
+      "tags": [
+        { "rotulo": "Alto Potencial", "sinonimos": ["oportunidade de negócio", "prospecção", "vendas", "faturamento"] },
+        { "rotulo": "Networking Estratégico", "sinonimos": ["parcerias", "conexões", "relacionamento institucional"] }
+      ]
+    },
+    {
+      "nome": "Formatos de Evento",
+      "tags": [
+        { "rotulo": "Presencial", "sinonimos": ["presencial", "local", "auditório"] },
+        { "rotulo": "Online", "sinonimos": ["online", "virtual", "webinar", "transmissão ao vivo"] },
+        { "rotulo": "Híbrido", "sinonimos": ["híbrido", "presencial e online"] },
+        { "rotulo": "Dia Inteiro", "sinonimos": ["dia inteiro", "full day", "8h às 17h", "programação completa"] },
+        { "rotulo": "Com Certificação", "sinonimos": ["certificado", "certificação", "certificado de participação"] }
+      ]
+    },
+    {
+      "nome": "Infraestrutura e Conectividade",
+      "tags": [
+        { "rotulo": "5G", "sinonimos": ["5g", "quinta geração", "rede móvel"] },
+        { "rotulo": "Fibra Óptica", "sinonimos": ["fibra óptica", "fibra", "fibra ótica"] },
+        { "rotulo": "Norte Conectado", "sinonimos": ["norte conectado", "amazônia", "região norte"] },
+        { "rotulo": "Cabos Submarinos", "sinonimos": ["cabo submarino", "elypsis", "conectividade internacional"] },
+        { "rotulo": "Data Centers", "sinonimos": ["datacenter", "data center", "centro de dados"] },
+        { "rotulo": "FUST", "sinonimos": ["fust", "fundo de universalização", "telecomunicações"] }
+      ]
+    },
+    {
+      "nome": "Políticas Públicas e Regulação",
+      "tags": [
+        { "rotulo": "Reforma Tributária", "sinonimos": ["reforma tributária", "IBS", "LC 214/25", "comitê gestor", "arrecadação"] },
+        { "rotulo": "Proteção de Dados", "sinonimos": ["lgpd", "privacidade", "proteção de dados", "anpd"] },
+        { "rotulo": "Regulação de Plataformas", "sinonimos": ["regulação", "plataformas digitais", "redes sociais"] },
+        { "rotulo": "Democracia Digital", "sinonimos": ["democracia digital", "processo eleitoral", "voto consciente"] },
+        { "rotulo": "Combate à Desinformação", "sinonimos": ["desinformação", "fake news", "informação confiável"] }
+      ]
+    },
+    {
+      "nome": "Ecossistema e Parcerias",
+      "tags": [
+        { "rotulo": "Startups", "sinonimos": ["startup", "scale-up", "empreendedorismo"] },
+        { "rotulo": "GovTech", "sinonimos": ["govtech", "tecnologia para governo", "mercado govtech"] },
+        { "rotulo": "Parcerias Internacionais", "sinonimos": ["internacional", "global", "cooperação internacional"] },
+        { "rotulo": "Entidades de Classe", "sinonimos": ["associação", "apm", "assefin", "anprotec"] }
+      ]
+    },
+    {
+      "nome": "Abrangência Geográfica",
+      "tags": [
+        { "rotulo": "Nacional", "sinonimos": ["brasil", "nacional", "país"] },
+        { "rotulo": "Regional", "sinonimos": ["regional", "norte", "nordeste", "sul", "sudeste", "centro-oeste"] },
+        { "rotulo": "Municipal", "sinonimos": ["municípios", "prefeituras", "cidades", "gestores municipais"] },
+        { "rotulo": "Internacional", "sinonimos": ["internacional", "global", "mundo", "barcelona", "espanha"] }
+      ]
+    },
+    {
+      "nome": "Temas Emergentes",
+      "tags": [
+        { "rotulo": "Cidades Inteligentes", "sinonimos": ["cidades inteligentes", "smart cities", "urbanismo digital"] },
+        { "rotulo": "IA na Gestão Pública", "sinonimos": ["ia na gestão", "inteligência artificial aplicada", "ia governo"] },
+        { "rotulo": "Privacidade e Fraude", "sinonimos": ["antifraude", "prevenção a fraudes", "integridade digital"] },
+        { "rotulo": "Bases de Dados Confiáveis", "sinonimos": ["dados confiáveis", "base de dados", "qualidade de dados"] },
+        { "rotulo": "Inclusão Digital", "sinonimos": ["inclusão digital", "acesso", "conectividade significativa"] }
+      ]
+    },
+    {
+      "nome": "Foco Municipalista",
+      "descricao": "Eventos com viés político-institucional de defesa e fortalecimento dos municípios.",
+      "tags": [
+        { "rotulo": "Municipalismo", "sinonimos": ["municipalista", "movimento municipalista", "defesa dos municípios", "autonomia municipal"] }
+      ]
+    },
+    {
+      "nome": "Áreas de Atuação na Gestão Pública",
+      "descricao": "Segmentos específicos da administração pública abordados em eventos.",
+      "tags": [
+        { "rotulo": "Saúde Pública", "sinonimos": ["gestão em saúde", "SUS", "atenção básica", "hospitais públicos", "consórcios de saúde"] },
+        { "rotulo": "Educação", "sinonimos": ["gestão educacional", "ensino", "escolas", "merenda escolar", "transporte escolar"] },
+        { "rotulo": "Infraestrutura Urbana", "sinonimos": ["obras", "pavimentação", "mobilidade urbana", "saneamento", "habitação"] },
+        { "rotulo": "Desenvolvimento Econômico", "sinonimos": ["geração de emprego", "atração de investimentos", "desenvolvimento regional", "agronegócio"] },
+        { "rotulo": "Turismo", "sinonimos": ["feira de turismo", "destinos turísticos", "promoção turística", "eventos de turismo"] },
+        { "rotulo": "Fazendário/Tributação", "sinonimos": ["fazendário", "finanças", "tributação", "fisco", "receita", "arrecadação"] }
+      ]
+    },
+    {
+      "nome": "Temas Técnicos e de Gestão",
+      "descricao": "Metodologias, ferramentas e abordagens modernas de gestão.",
+      "tags": [
+        { "rotulo": "Metodologias Ágeis", "sinonimos": ["agile", "scrum", "kanban", "gestão ágil", "agilidade"] },
+        { "rotulo": "Transformação Digital", "sinonimos": ["digitalização", "modernização", "governo digital", "serviços digitais"] },
+        { "rotulo": "Governança", "sinonimos": ["gestão estratégica", "planejamento", "controle interno", "transparência"] },
+        { "rotulo": "Inovação", "sinonimos": ["inovador", "disruptivo", "startup", "hub de inovação"] }
+      ]
+    },
+    {
+      "nome": "Tipo de Atividade no Evento",
+      "descricao": "O formato específico da participação ou da programação.",
+      "tags": [
+        { "rotulo": "Feira de Negócios", "sinonimos": ["exposição", "estande", "rodada de negócios", "feira", "expo"] },
+        { "rotulo": "Painéis Temáticos", "sinonimos": ["painel", "mesa redonda", "debate", "discussão"] },
+        { "rotulo": "Oficinas/Workshops", "sinonimos": ["oficina prática", "workshop", "hands-on", "treinamento", "capacitação"] },
+        { "rotulo": "Atendimento Individualizado", "sinonimos": ["consultoria", "atendimento técnico", "reunião bilateral"] },
+        { "rotulo": "Palestras Magnas", "sinonimos": ["keynote", "palestra principal", "abertura"] }
+      ]
+    },
+    {
+      "nome": "Órgãos e Entidades Presentes",
+      "descricao": "Identifica a presença de instituições-chave que podem indicar oportunidades.",
+      "tags": [
+        { "rotulo": "Presença da RFB", "sinonimos": ["receita federal", "RFB", "delegacia da receita"] },
+        { "rotulo": "Presença do TCU", "sinonimos": ["tribunal de contas da união", "tcu"] },
+        { "rotulo": "Presença de Tribunais de Contas", "sinonimos": ["tce", "tcm", "tribunal de contas do estado", "tribunal de contas do município"] },
+        { "rotulo": "Presença do Judiciário", "sinonimos": ["tj", "tribunal de justiça", "cnj", "poder judiciário"] },
+        { "rotulo": "Presença do Legislativo", "sinonimos": ["câmara", "senado", "assembleia", "vereadores", "deputados"] }
+      ]
+    },
+    {
+      "nome": "Porte do Evento",
+      "descricao": "A dimensão e relevância do evento no cenário nacional/internacional.",
+      "tags": [
+        { "rotulo": "Grande Porte (Nacional/Internacional)", "sinonimos": ["maior evento", "principal encontro", "referência nacional", "internacional"] },
+        { "rotulo": "Edição Histórica", "sinonimos": ["40ª edição", "edição comemorativa", "XX anos", "edição histórica"] }
+      ]
+    },
+    {
+      "nome": "Organizadores do Evento",
+      "descricao": "Identifica entidades e instituições que organizam ou promovem o evento.",
+      "tags": [
+        { "rotulo": "CNM", "sinonimos": ["cnm", "confederação nacional de municípios", "confederação dos municípios"] },
+        { "rotulo": "Famurs", "sinonimos": ["famurs", "federação dos municípios do rio grande do sul"] },
+        { "rotulo": "Amupe", "sinonimos": ["amupe", "associação municipalista de pernambuco"] },
+        { "rotulo": "Aprece", "sinonimos": ["aprece", "associação dos municípios do estado do ceará"] },
+        { "rotulo": "UPB", "sinonimos": ["upb", "união dos municípios da bahia"] }
+      ]
+    },
+    {
+      "nome": "Status de Participação",
+      "descricao": "Captura a condição do participante ou município no evento, que pode influenciar o custo e o tipo de relacionamento.",
+      "tags": [
+        { "rotulo": "Município Contribuinte", "sinonimos": ["contribuinte cnm", "associado", "em dia com contribuições", "município contribuinte"] },
+        { "rotulo": "Município Não-Contribuinte", "sinonimos": ["não contribuinte", "não associado", "inadimplente"] },
+        { "rotulo": "Participante Isento", "sinonimos": ["isento", "inscrição gratuita", "cortesia", "prefeito isento"] }
+      ]
+    },
+    {
+      "nome": "Cargos e Funções",
+      "descricao": "Especifica os cargos dos participantes, permitindo um direcionamento de vendas mais preciso.",
+      "tags": [
+        { "rotulo": "Prefeito(a)", "sinonimos": ["prefeito", "prefeita", "alcaide"] },
+        { "rotulo": "Vice-Prefeito(a)", "sinonimos": ["vice-prefeito", "vice-prefeita"] },
+        { "rotulo": "Vereador(a)", "sinonimos": ["vereador", "vereadora", "edil"] },
+        { "rotulo": "Secretário(a) Municipal", "sinonimos": ["secretário", "secretária", "gestor municipal"] }
+      ]
+    },
+    {
+      "nome": "Localização Específica",
+      "descricao": "Tags mais granulares para o local do evento, além da abrangência geográfica geral.",
+      "tags": [
+        { "rotulo": "Brasília/DF", "sinonimos": ["brasília", "distrito federal", "capital federal"] },
+        { "rotulo": "Rio de Janeiro/RJ", "sinonimos": ["rio de janeiro", "cidade maravilhosa", "riocentro"] }
+      ]
+    },
+    {
+      "nome": "Características de Inscrição",
+      "descricao": "Detalhes sobre o processo de inscrição que podem ser relevantes para análise de conversão.",
+      "tags": [
+        { "rotulo": "Inscrição por Boleto", "sinonimos": ["boleto bancário", "pagamento por boleto"] },
+        { "rotulo": "Prazo Escalonado", "sinonimos": ["inscrição antecipada", "lotes", "valores progressivos"] }
+      ]
+    },
+    {
+      "nome": "Ecossistema de Inovação e Negócios",
+      "descricao": "Identifica os atores e forças do ecossistema de empreendedorismo e tecnologia.",
+      "tags": [
+        { "rotulo": "Startups", "sinonimos": ["startup", "empreendedorismo", "nova empresa", "scale-up"] },
+        { "rotulo": "Investidores", "sinonimos": ["investidor anjo", "venture capital", "VC", "fundo de investimento", "capital de risco"] },
+        { "rotulo": "Fundadores", "sinonimos": ["fundador", "co-fundador", "empreendedor", "criador"] },
+        { "rotulo": "Mentoria", "sinonimos": ["mentoria", "aconselhamento", "especialistas", "consultoria"] }
+      ]
+    },
+    {
+      "nome": "Atores do Mercado Global",
+      "descricao": "Identifica a presença de grandes empresas e líderes do setor de tecnologia.",
+      "tags": [
+        { "rotulo": "Big Techs", "sinonimos": ["microsoft", "sap", "google", "amazon", "aws", "meta", "apple", "oracle"] },
+        { "rotulo": "Líderes Globais", "sinonimos": ["ceo global", "presidente", "c-level", "executivo internacional"] }
+      ]
+    },
+    {
+      "nome": "Temas de Alto Nível",
+      "descricao": "Macro-tendências e conceitos abrangentes discutidos em eventos de grande porte.",
+      "tags": [
+        { "rotulo": "Futuro da Tecnologia", "sinonimos": ["futuro", "tendências", "próximos passos", "visão de futuro"] },
+        { "rotulo": "Inovação Disruptiva", "sinonimos": ["disrupção", "tecnologia de ponta", "inovação radical"] },
+        { "rotulo": "Networking Global", "sinonimos": ["conexões globais", "networking internacional", "relacionamento com investidores"] }
+      ]
+    },
+    {
+      "nome": "Rede do Evento",
+      "descricao": "Identifica se o evento faz parte de uma franquia ou rede internacional.",
+      "tags": [
+        { "rotulo": "Rede Web Summit", "sinonimos": ["web summit rio", "web summit lisboa", "web summit qatar", "web summit vancouver", "rise asia"] }
+      ]
+    }
+  ]
+}
