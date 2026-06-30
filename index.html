@@ -1,349 +1,724 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SGE - Cadastro de Eventos</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGE · Gerador Eloqua · UX + Contadores</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Dados externalizados -->
+  <!-- Arquivos externos obrigatórios -->
   <script src="paises.js"></script>
   <script src="ufs.js"></script>
   <script src="regiao.js"></script>
   <script src="tipodeevento.js"></script>
   <script src="tagueamento.js"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-    .tab-active { @apply border-blue-600 text-blue-600 bg-blue-50/50; }
-    .tab-inactive { @apply border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50; }
-    .chip { @apply inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border m-0.5; }
-    .chip-blue { @apply bg-blue-50 text-blue-700 border-blue-100; }
-    .chip-green { @apply bg-green-50 text-green-700 border-green-100; }
-    .chip-slate { @apply bg-slate-50 text-slate-600 border-slate-200; }
-    .tag-automatica { @apply chip chip-blue; }
-    .tag-manual { @apply chip chip-green; }
-    .tag-remove { @apply ml-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer; }
+    body {
+      background: #f1f5f9;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .transition-fade {
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .tooltip {
+      position: relative;
+      cursor: help;
+    }
+    .tooltip:hover:after,
+    .tooltip:focus:after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      z-index: 10;
+      margin-bottom: 6px;
+    }
+    .invalid {
+      border-color: #f87171 !important;
+      background-color: #fee2e2 !important;
+    }
+    .char-counter {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+    #toast {
+      transition: opacity 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+    }
+    .section-campaign,
+    .section-event {
+      transition: all 0.2s ease;
+    }
+    .hidden-section {
+      display: none !important;
+    }
+    .required-asterisk::after {
+      content: "";
+      color: #ef4444;
+      font-weight: bold;
+    }
+    /* Estilos do nosso formulário de eventos */
+    .tab-active {
+      border-color: #2563eb;
+      color: #2563eb;
+      background-color: #eff6ff;
+    }
+    .tab-inactive {
+      border-color: transparent;
+      color: #94a3b8;
+    }
+    .tab-inactive:hover {
+      color: #475569;
+      background-color: #f8fafc;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      border: 1px solid;
+      margin: 0.125rem;
+    }
+    .chip-blue {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    .chip-green {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+    .chip-slate {
+      background: #f1f5f9;
+      color: #475569;
+      border-color: #e2e8f0;
+    }
+    .tag-automatica {
+      @apply chip chip-blue;
+    }
+    .tag-manual {
+      @apply chip chip-green;
+    }
+    .tag-remove {
+      margin-left: 0.25rem;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .tag-remove:hover {
+      color: #475569;
+    }
     .autocomplete-list {
-      @apply absolute z-50 w-full bg-white border border-slate-200 rounded-b-2xl shadow-2xl max-h-48 overflow-y-auto mt-1 hidden;
+      position: absolute;
+      z-index: 50;
+      width: 100%;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 0 0 1rem 1rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      max-height: 12rem;
+      overflow-y: auto;
+      margin-top: 0.25rem;
+      display: none;
     }
     .autocomplete-item {
-      @apply p-3 cursor-pointer text-sm text-slate-700 hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-none;
+      padding: 0.75rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #334155;
+      transition: background 0.15s;
+      border-bottom: 1px solid #f1f5f9;
     }
-    .checkbox-label { @apply flex items-center gap-2 cursor-pointer text-[11px] font-bold text-slate-600 uppercase tracking-tight; }
-    .checkbox-input { @apply w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
-    /* Estilo para o contador de caracteres */
-    .char-counter {
-      font-size: 11px;
+    .autocomplete-item:hover {
+      background: #eff6ff;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.7rem;
       font-weight: 700;
-      transition: color 0.2s ease;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .char-counter.warning { color: #f59e0b; } /* laranja */
-    .char-counter.danger { color: #dc2626; } /* vermelho */
+    .checkbox-input {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 0.25rem;
+      border-color: #cbd5e1;
+      color: #2563eb;
+    }
+    .radio-group {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #334155;
+    }
+    .radio-input {
+      width: 1rem;
+      height: 1rem;
+      border-color: #cbd5e1;
+      color: #2563eb;
+    }
   </style>
 </head>
-<body class="min-h-screen py-10 px-4">
 
-  <div class="max-w-4xl mx-auto space-y-6">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- Cabeçalho -->
-    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
-      <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 class="text-2xl font-black tracking-tight text-slate-900">SGE</h1>
-          <p class="text-sm text-slate-500">Cadastro de Eventos</p>
+  <div class="max-w-6xl w-full bg-white rounded-3xl shadow-2xl p-8 space-y-8">
+
+    <!-- Cabeçalho com botão de reset e atalho -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="text-center sm:text-left">
+        <h1 class="text-3xl font-black text-gray-800">SGE · Gerador Eloqua</h1>
+        <p class="text-sm text-gray-500 mt-1">Preencha os campos. O nome combinado é gerado automaticamente.</p>
+      </div>
+      <button id="resetBtn"
+        class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl shadow transition-all uppercase tracking-wider text-sm">
+        ↻ Limpar tudo <span class="text-xs font-normal ml-1 opacity-60">(Ctrl+L)</span>
+      </button>
+    </div>
+
+    <!-- Seletor de modo -->
+    <div class="bg-gray-100 p-4 rounded-xl flex flex-wrap items-center gap-6">
+      <span class="text-sm font-semibold text-gray-600">Modo de registro:</span>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="radio" name="mode" value="both" checked> Ambos (Campanha + Evento)
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="radio" name="mode" value="campaign"> Apenas Campanha
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="radio" name="mode" value="event"> Apenas Evento
+      </label>
+      <div class="text-xs text-gray-400 ml-auto">Atalho: Ctrl+L limpa tudo</div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8" id="columnsContainer">
+      <!-- COLUNA ESQUERDA: CAMPANHA (mantida intacta) -->
+      <div class="section-campaign bg-green-50/50 rounded-2xl border border-green-100 p-6 space-y-4">
+        <h2 class="text-lg font-bold text-green-800 flex items-center gap-2"><span
+            class="w-2 h-2 bg-green-600 rounded-full"></span>Campanha</h2>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-gray-500 uppercase required-asterisk flex items-center gap-1">
+            Nome (max 34)
+          </label>
+          <input type="text" id="campNome" maxlength="34" placeholder="ex: Campanha Gov Digital" aria-required="true"
+            class="w-full px-4 py-3 bg-white border border-green-200 rounded-xl outline-none focus:ring-4 focus:ring-green-200 transition">
+          <div id="campNomeCounter" class="char-counter">0/34</div>
         </div>
-        <button onclick="resetEventForm()" class="px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm">
-          Novo Evento
-        </button>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-gray-500 uppercase required-asterisk">Data Início</label>
+          <input type="date" id="campDataInicio" aria-required="true"
+            class="w-full px-4 py-3 bg-white border border-green-200 rounded-xl outline-none focus:ring-4 focus:ring-green-200 transition">
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-gray-500 uppercase required-asterisk">País</label>
+          <select id="campPais" aria-required="true"
+            class="w-full px-4 py-3 bg-white border border-green-200 rounded-xl outline-none focus:ring-4 focus:ring-green-200 transition">
+            <option value="">Selecione um país</option>
+          </select>
+        </div>
+
+        <div id="campBrasilOptions" class="hidden space-y-3 transition-fade">
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 text-xs tooltip" data-tooltip="Adiciona sigla da região (ex: BRA-R1)">
+              <input type="radio" name="campNacionalSubTipo" value="regiao" checked> Região
+            </label>
+            <label class="flex items-center gap-2 text-xs tooltip" data-tooltip="Adiciona sigla do estado (ex: BRA-SP)">
+              <input type="radio" name="campNacionalSubTipo" value="uf"> UF
+            </label>
+          </div>
+
+          <div id="campRegiaoContainer">
+            <label class="block text-xs font-bold text-gray-500 uppercase">Região</label>
+            <select id="campRegiao"
+              class="w-full px-4 py-3 bg-white border border-green-200 rounded-xl outline-none focus:ring-4 focus:ring-green-200 transition">
+              <option value="">Selecione uma região</option>
+            </select>
+          </div>
+
+          <div id="campUfContainer" class="hidden">
+            <label class="block text-xs font-bold text-gray-500 uppercase">UF</label>
+            <select id="campUf"
+              class="w-full px-4 py-3 bg-white border border-green-200 rounded-xl outline-none focus:ring-4 focus:ring-green-200 transition">
+              <option value="">Selecione uma UF</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-green-100">
+          <label class="block text-xs font-bold text-gray-400 uppercase">Nome Eloqua da Campanha</label>
+          <input type="text" id="campEloqua" readonly
+            class="w-full mt-1 px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm font-mono text-gray-600">
+        </div>
       </div>
 
-      <!-- FORMULÁRIO DE EVENTO -->
-      <div class="p-8">
-        <div class="bg-white rounded-[2rem] shadow-lg border border-slate-200 overflow-hidden">
-          <div class="px-6 py-5 bg-blue-600 text-white">
-            <h2 id="eventFormTitle" class="text-lg font-black">Cadastro de Evento</h2>
-            <p class="text-blue-100 text-xs mt-1">Preencha os dados do evento</p>
-          </div>
+      <!-- COLUNA DIREITA: EVENTO (nosso formulário completo) -->
+      <div class="section-event bg-blue-50/50 rounded-2xl border border-blue-100 p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-blue-800 flex items-center gap-2"><span
+              class="w-2 h-2 bg-blue-600 rounded-full"></span>Evento</h2>
+          <button onclick="resetEventForm()" class="text-xs text-blue-600 hover:underline">Limpar evento</button>
+        </div>
 
-          <div class="flex border-b border-slate-100 bg-slate-50/30">
-            <button type="button" onclick="switchEventTab('main')" id="btn-event-tab-main" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all tab-active">Principais</button>
-            <button type="button" onclick="switchEventTab('extra')" id="btn-event-tab-extra" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all tab-inactive">Detalhamento</button>
-          </div>
+        <!-- Abas do evento (Principais / Detalhamento) -->
+        <div class="flex border-b border-blue-100 bg-blue-50/30 rounded-t-xl overflow-hidden">
+          <button type="button" onclick="switchEventTab('main')" id="btn-event-tab-main"
+            class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all tab-active">
+            Principais
+          </button>
+          <button type="button" onclick="switchEventTab('extra')" id="btn-event-tab-extra"
+            class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all tab-inactive">
+            Detalhamento
+          </button>
+        </div>
 
-          <form id="eventForm" class="p-6 space-y-4">
-            <input type="hidden" id="editingEventId" />
+        <form id="eventForm" class="space-y-4">
+          <input type="hidden" id="editingEventId" />
 
-            <div id="event-tab-main" class="space-y-4">
-              <div class="space-y-1 relative">
-                <div class="flex justify-between items-center">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome do Evento * (máx. 34 caracteres)</label>
-                  <span id="charCounter" class="char-counter">0/34</span>
-                </div>
-                <input type="text" id="nomeEvento" required maxlength="34" placeholder="Digite o nome..."
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                  oninput="atualizarContador()">
-                <div id="autocomplete-event-list" class="autocomplete-list"></div>
+          <!-- Aba Principais -->
+          <div id="event-tab-main" class="space-y-4">
+            <!-- Nome com contador -->
+            <div class="space-y-1 relative">
+              <div class="flex justify-between items-center">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome do Evento * (máx. 34)</label>
+                <span id="eventNomeCounter2" class="char-counter text-xs font-bold">0/34</span>
               </div>
+              <input type="text" id="eventNome" required maxlength="34" placeholder="Digite o nome..."
+                class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+              <div id="autocomplete-event-list" class="autocomplete-list"></div>
+            </div>
 
-              <!-- Bloco com botão de cópia -->
-              <div class="p-5 bg-slate-50 rounded-[1.5rem] border border-slate-200 space-y-3">
-                <div class="flex items-center justify-between">
-                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Identificação Eloqua do Evento</label>
-                  <button type="button" onclick="copyEloquaCode()" class="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded-lg hover:bg-blue-50" title="Copiar para área de transferência">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Eloqua do evento (gerado automaticamente) -->
+            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Identificação Eloqua do Evento</label>
+                <button type="button" onclick="copyEloquaCodeEvent()" class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-lg hover:bg-blue-50" title="Copiar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+              <input type="text" id="eventEloqua" readonly
+                class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm font-mono text-gray-600">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase required-asterisk">Ano</label>
+                <select id="eventAno"
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase required-asterisk">Mês</label>
+                <select id="eventMes"
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+                  <option value="">Selecione</option>
+                  <!-- Preenchido via JS -->
+                </select>
+              </div>
+            </div>
+
+            <!-- Checkboxes Presencial e Transmitido via web -->
+            <div class="space-y-1">
+              <label class="checkbox-label">
+                <input type="checkbox" id="presencial" class="checkbox-input" onchange="toggleLocationFields()" checked>
+                Presencial
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="transmitidoWeb" class="checkbox-input">
+                Transmitido via web
+              </label>
+            </div>
+
+            <!-- Bloco de localização (oculto se Presencial não marcado) -->
+            <div id="locationBlock">
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase required-asterisk">País</label>
+                <select id="eventPais" onchange="toggleEventUf(); generateEventEloquaField();"
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+                  <option value="">Selecione um país</option>
+                </select>
+              </div>
+              <div id="eventUfContainer" class="hidden transition-fade space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase">UF (se Brasil)</label>
+                <select id="eventUf" onchange="generateEventEloquaField();"
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+                  <option value="">Selecione uma UF</option>
+                </select>
+              </div>
+              <div id="containerLocalidadeEvento" class="hidden space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase">Localidade Internacional</label>
+                <input type="text" id="localidadeInternacionalEvento" placeholder="Cidade..."
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+              </div>
+            </div>
+          </div>
+
+          <!-- Aba Detalhamento -->
+          <div id="event-tab-extra" class="hidden space-y-4">
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase">Financiamento</label>
+              <select id="financiamento"
+                class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+                <option value="Área origem">Área origem</option>
+                <option value="Corporativo">Corporativo</option>
+                <option value="Externo">Externo</option>
+                <option value="Educacional (SUPED)">Educacional (SUPED)</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-gray-500 uppercase">Mercado Alvo</label>
+              <div class="flex gap-4 flex-wrap">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="mercadoAlvo" value="Público" class="checkbox-input"> Público
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="mercadoAlvo" value="Privado" class="checkbox-input"> Privado
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="mercadoAlvo" value="Internacional" class="checkbox-input"> Internacional
+                </label>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase">Stand</label>
+              <select id="stand"
+                class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+                <option value="">Selecione...</option>
+                <option value="Próprio">Próprio</option>
+                <option value="Compartilhado">Compartilhado</option>
+              </select>
+            </div>
+
+            <!-- Descrição/Justificativa -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold text-gray-500 uppercase">Descrição/Justificativa</label>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="copiarJustificativa()" class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-lg hover:bg-blue-50" title="Copiar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                </div>
-                <input type="text" id="nomeEloquaEvento" readonly tabindex="-1"
-                  class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-slate-500 font-mono text-xs cursor-not-allowed shadow-sm"
-                  placeholder="Gerado automaticamente...">
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ano do Evento *</label>
-                  <input type="number" id="edicaoEvento" value="2026" required
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                </div>
-                <div class="space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mês do Evento *</label>
-                  <select id="mesEvento" required
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                    <option value="">Selecione...</option>
-                    <option>Janeiro</option><option>Fevereiro</option><option>Março</option><option>Abril</option>
-                    <option>Maio</option><option>Junho</option><option>Julho</option><option>Agosto</option>
-                    <option>Setembro</option><option>Outubro</option><option>Novembro</option><option>Dezembro</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- DOIS CHECKBOXES: Presencial e Transmitido via web -->
-              <div class="space-y-1">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="presencial" class="checkbox-input" onchange="toggleLocationFields()" checked>
-                  Presencial
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" id="transmitidoWeb" class="checkbox-input">
-                  Transmitido via web
-                </label>
-              </div>
-
-              <!-- Bloco de localização (será ocultado se Presencial não estiver marcado) -->
-              <div id="locationBlock">
-                <div class="space-y-1" id="paisContainer">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">País Origem do Evento</label>
-                  <select id="paisEvento" onchange="togglePaisEvento(); syncEventLocationFields();"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                    <!-- Preenchido via JavaScript -->
-                  </select>
-                </div>
-
-                <div id="containerUFEvento" class="space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">UF origem do evento</label>
-                  <select id="ufEvento" onchange="syncEventLocationFields()"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                    <!-- Preenchido via JavaScript -->
-                  </select>
-                </div>
-
-                <div id="containerLocalidadeEvento" class="hidden space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Localidade Internacional</label>
-                  <input type="text" id="localidadeInternacionalEvento" placeholder="Cidade..."
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                </div>
-              </div>
-            </div> <!-- Fim da aba main -->
-
-            <div id="event-tab-extra" class="hidden space-y-4">
-              <!-- ===== NOVOS CAMPOS INSERIDOS NO INÍCIO DO DETALHAMENTO ===== -->
-              <div class="space-y-1">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Financiamento</label>
-                <select id="financiamento"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                  <option value="Área origem">Área origem</option>
-                  <option value="Corporativo">Corporativo</option>
-                  <option value="Externo">Externo</option>
-                  <option value="Educacional (SUPED)">Educacional (SUPED)</option>
-                </select>
-              </div>
-
-              <div class="space-y-2">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mercado Alvo</label>
-                <div class="flex gap-6 flex-wrap">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="mercadoAlvo" value="Público" class="checkbox-input"> Público
-                  </label>
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="mercadoAlvo" value="Privado" class="checkbox-input"> Privado
-                  </label>
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="mercadoAlvo" value="Internacional" class="checkbox-input"> Internacional
-                  </label>
-                </div>
-              </div>
-              <!-- ===== FIM DOS NOVOS CAMPOS ===== -->
-
-              <!-- Descrição com botões Gerar e Copiar -->
-              <div class="space-y-1">
-                <div class="flex items-center justify-between">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Descrição/Justificativa do Evento</label>
-                  <div class="flex items-center gap-1">
-                    <button type="button" onclick="copiarJustificativa()" class="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded-lg hover:bg-blue-50" title="Copiar justificativa">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                    <button type="button" onclick="gerarJustificativa()" class="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded-lg hover:bg-blue-50 text-xs font-bold flex items-center gap-1">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      Gerar
-                    </button>
-                  </div>
-                </div>
-                <textarea id="descEvento" rows="5"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"></textarea>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data Início</label>
-                  <input type="date" id="dataInicioEvento"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                </div>
-                <div class="space-y-1">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data Fim</label>
-                  <input type="date" id="dataFimEvento"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-                </div>
-              </div>
-
-              <!-- Box de endereço (será ocultado se Presencial não estiver marcado) -->
-              <div id="enderecoContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                <div class="grid grid-cols-3 gap-3">
-                  <div class="space-y-1">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase">CEP</label>
-                    <input type="text" id="cepEvento" placeholder="00000-000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
-                  </div>
-                  <div class="col-span-2 space-y-1">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase">Endereço</label>
-                    <input type="text" id="enderecoEvento" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="space-y-1">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase">Município</label>
-                    <input type="text" id="municipioEvento" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
-                  </div>
-                  <div class="space-y-1">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase">Local de realização</label>
-                    <input type="text" id="localLivre" placeholder="Ex: Auditório, Centro de Convenções..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
-                  </div>
-                </div>
-              </div>
-
-              <div id="syncContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="space-y-1">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase">UF sincronizada</label>
-                    <input type="text" id="ufEventoSync" readonly
-                      class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500">
-                  </div>
-                  <div class="space-y-1">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase">País sincronizado</label>
-                    <input type="text" id="paisEventoSync" readonly
-                      class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Site e Tags -->
-              <div class="space-y-1">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Site Oficial</label>
-                <input type="text" id="siteEvento" placeholder="https://..."
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
-              </div>
-
-              <div class="space-y-2">
-                <button type="button" onclick="gerarTagsComIA(event)" 
-                  class="w-full py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors">
-                  Gerar Tags Automaticamente
-                </button>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tags</label>
-                <div id="tagsContainer" class="flex flex-wrap gap-1 p-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[42px]">
-                  <!-- Chips serão inseridos aqui dinamicamente -->
-                </div>
-                <div class="flex gap-2">
-                  <input type="text" id="tagInputManual" placeholder="Nova tag..." 
-                    class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
-                  <button type="button" onclick="adicionarTagManual()" 
-                    class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors">
-                    Adicionar
+                  <button type="button" onclick="gerarJustificativa()" class="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-lg hover:bg-blue-50 text-xs font-bold flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Gerar
                   </button>
                 </div>
               </div>
-            </div> <!-- Fim da aba extra -->
+              <textarea id="descEvento" rows="4"
+                class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none resize-none focus:ring-4 focus:ring-blue-200 transition"></textarea>
+            </div>
 
-            <button type="submit" id="btnSubmitEvento"
-              class="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg transition-all uppercase tracking-widest text-[10px]">
-              Salvar Evento
-            </button>
-          </form>
-        </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase">Data Início</label>
+                <input type="date" id="dataInicioEvento"
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-gray-500 uppercase">Data Fim</label>
+                <input type="date" id="dataFimEvento"
+                  class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+              </div>
+            </div>
+
+            <!-- Endereço (visível se Presencial marcado) -->
+            <div id="enderecoContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+              <div class="grid grid-cols-3 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-black text-slate-400 uppercase">CEP</label>
+                  <input type="text" id="cepEvento" placeholder="00000-000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+                <div class="col-span-2 space-y-1">
+                  <label class="block text-[9px] font-black text-slate-400 uppercase">Endereço</label>
+                  <input type="text" id="enderecoEvento" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-black text-slate-400 uppercase">Município</label>
+                  <input type="text" id="municipioEvento" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-black text-slate-400 uppercase">Local de realização</label>
+                  <input type="text" id="localLivre" placeholder="Ex: Auditório" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+              </div>
+            </div>
+
+            <!-- Campos sincronizados -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-black text-slate-400 uppercase">UF sincronizada</label>
+                  <input type="text" id="ufEventoSync" readonly
+                    class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500">
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-black text-slate-400 uppercase">País sincronizado</label>
+                  <input type="text" id="paisEventoSync" readonly
+                    class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500">
+                </div>
+              </div>
+            </div>
+
+            <!-- Site e Tags -->
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase">Site Oficial</label>
+              <input type="text" id="siteEvento" placeholder="https://..."
+                class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-200 transition">
+            </div>
+
+            <div class="space-y-2">
+              <button type="button" onclick="gerarTagsComIA(event)"
+                class="w-full py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors">
+                Gerar Tags Automaticamente
+              </button>
+              <label class="block text-xs font-bold text-gray-500 uppercase">Tags</label>
+              <div id="tagsContainer" class="flex flex-wrap gap-1 p-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[42px]"></div>
+              <div class="flex gap-2">
+                <input type="text" id="tagInputManual" placeholder="Nova tag..."
+                  class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+                <button type="button" onclick="adicionarTagManual()"
+                  class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors">
+                  Adicionar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="btnSubmitEvento"
+            class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg transition-all uppercase tracking-widest text-[10px]">
+            Salvar Evento
+          </button>
+        </form>
       </div>
     </div>
+
+    <!-- NOME COMBINADO / GERADO -->
+    <div class="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1" id="combinedLabel">Nome Eloqua Gerado</label>
+      <div class="relative flex items-center">
+        <input type="text" id="combinedEloqua" readonly
+          class="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl font-mono text-sm pr-16 transition-all duration-200">
+        <button id="copyBtn" onclick="copyCombined(event)"
+          class="absolute right-2 p-2 text-gray-400 hover:text-indigo-600 transition-colors tooltip"
+          data-tooltip="Copiar para área de transferência" aria-label="Copiar nome gerado">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400 text-center">Os nomes são atualizados automaticamente. Dica: use Ctrl+L para limpar tudo.</p>
   </div>
 
-  <!-- MODAL -->
-  <div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center z-[100]">
-    <div class="bg-white rounded-[2rem] p-10 text-center max-w-md w-full shadow-2xl">
-      <h3 id="modalTitle" class="text-lg font-black text-slate-900 uppercase tracking-widest">Confirmado</h3>
-      <div id="modalCode" class="text-3xl font-black text-blue-600 bg-blue-50 py-5 rounded-[1.5rem] border border-blue-100 my-6 tracking-tight">OK</div>
-      <button onclick="closeModal()"
-        class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-colors">
-        Fechar
-      </button>
-    </div>
+  <!-- Toast de notificação -->
+  <div id="toast"
+    class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg text-sm z-50">
+    Copiado!
   </div>
 
   <script>
     (function() {
-      // ==================== ESTADO ====================
-      let eventSequential = 1000;
-      let events = [];
-      let currentEventTags = [];
+      // ---------- Verificação de dependências externas ----------
+      if (typeof paises === 'undefined' || typeof ufs === 'undefined' || typeof regioes === 'undefined') {
+        alert('Erro ao carregar os dados (paises.js, ufs.js, regiao.js). Recarregue a página ou contate o suporte.');
+        console.error('Dados externos não carregados.');
+        return;
+      }
 
-      const mesesNumMap = {
-        "Janeiro": "01", "Fevereiro": "02", "Março": "03", "Abril": "04",
-        "Maio": "05", "Junho": "06", "Julho": "07", "Agosto": "08",
-        "Setembro": "09", "Outubro": "10", "Novembro": "11", "Dezembro": "12"
+      // ---------- Dados ----------
+      const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const mesesNum = {
+        "Janeiro": "01", "Fevereiro": "02", "Março": "03", "Abril": "04", "Maio": "05", "Junho": "06",
+        "Julho": "07", "Agosto": "08", "Setembro": "09", "Outubro": "10", "Novembro": "11", "Dezembro": "12"
       };
 
-      // ==================== CONTADOR DE CARACTERES ====================
-      function atualizarContador() {
-        const input = document.getElementById('nomeEvento');
-        const counter = document.getElementById('charCounter');
-        const length = input.value.length;
-        const max = 34;
-        counter.textContent = `${length}/${max}`;
-        // Remove classes antigas
-        counter.classList.remove('warning', 'danger');
-        if (length >= max) {
-          counter.classList.add('danger');
-        } else if (length >= 30) {
-          counter.classList.add('warning');
+      // ---------- Estado do Evento (nosso) ----------
+      let currentEventTags = [];
+
+      // ---------- Referências DOM (campanha e combinado) ----------
+      const modeRadios = document.querySelectorAll('input[name="mode"]');
+      const sectionCamp = document.querySelector('.section-campaign');
+      const sectionEvent = document.querySelector('.section-event');
+      const combinedInput = document.getElementById('combinedEloqua');
+      const combinedLabel = document.getElementById('combinedLabel');
+
+      // ---------- Funções auxiliares (toast, contador) ----------
+      function showToast(message = "Copiado!") {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      }
+
+      function updateCharCounter(inputId, counterId) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        if (input && counter) {
+          const len = input.value.length;
+          counter.textContent = `${len}/34`;
+          counter.classList.remove('text-orange-500', 'text-red-600');
+          if (len >= 30) counter.classList.add('text-orange-500');
+          if (len >= 34) counter.classList.add('text-red-600');
         }
       }
 
-      // ==================== FUNÇÕES DE GERAÇÃO DE CÓDIGOS ====================
-      function generateEventCode() {
-        return `EVT-${eventSequential++}`;
+      // ---------- Preencher selects (campanha e evento) ----------
+      function populateAll() {
+        try {
+          // Campanha: país
+          const campPais = document.getElementById('campPais');
+          const sortedPaises = paises.slice().sort((a, b) => a.nome.localeCompare(b.nome));
+          const brasil = sortedPaises.find(p => p.nome.toUpperCase() === 'BRASIL');
+          if (brasil) {
+            campPais.add(new Option(brasil.nome, brasil.nome));
+            campPais.add(new Option('-----------', ''));
+            campPais.options[campPais.options.length - 1].disabled = true;
+          }
+          sortedPaises.filter(p => p.nome.toUpperCase() !== 'BRASIL').forEach(p => campPais.add(new Option(p.nome, p.nome)));
+
+          // Campanha: região e UF
+          const campRegiao = document.getElementById('campRegiao');
+          regioes.forEach(r => {
+            const sigla = r.sigla || r.nome.substring(0, 2).toUpperCase();
+            campRegiao.add(new Option(r.nome, sigla));
+          });
+          const campUf = document.getElementById('campUf');
+          ufs.forEach(u => campUf.add(new Option(u.sigla, u.sigla)));
+
+          // Evento: país (com Brasil no topo)
+          const eventPais = document.getElementById('eventPais');
+          if (brasil) {
+            eventPais.add(new Option(brasil.nome, brasil.nome));
+            eventPais.add(new Option('-----------', ''));
+            eventPais.options[eventPais.options.length - 1].disabled = true;
+          }
+          sortedPaises.filter(p => p.nome.toUpperCase() !== 'BRASIL').forEach(p => eventPais.add(new Option(p.nome, p.nome)));
+
+          // Evento: UF
+          const eventUf = document.getElementById('eventUf');
+          ufs.forEach(u => eventUf.add(new Option(u.sigla, u.sigla)));
+
+          // Evento: meses
+          const eventMes = document.getElementById('eventMes');
+          meses.forEach(m => eventMes.add(new Option(m, m)));
+
+          // Evento: autocomplete precisa dos eventos mock (será populado depois)
+        } catch (e) {
+          console.warn('Erro ao popular selects:', e);
+          showToast('Erro ao carregar opções');
+        }
       }
 
+      // ---------- Funções de visibilidade (modo, Brasil, UF) ----------
+      function updateModeVisibility() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        if (mode === 'campaign') {
+          sectionCamp.classList.remove('hidden-section');
+          sectionEvent.classList.add('hidden-section');
+          combinedLabel.textContent = 'Nome Eloqua da Campanha';
+        } else if (mode === 'event') {
+          sectionCamp.classList.add('hidden-section');
+          sectionEvent.classList.remove('hidden-section');
+          combinedLabel.textContent = 'Nome Eloqua do Evento';
+        } else {
+          sectionCamp.classList.remove('hidden-section');
+          sectionEvent.classList.remove('hidden-section');
+          combinedLabel.textContent = 'Nome Eloqua Combinado (Campanha + Evento)';
+        }
+        combine();
+      }
+
+      function toggleCampBrasilOptions() {
+        const pais = document.getElementById('campPais').value;
+        document.getElementById('campBrasilOptions').classList.toggle('hidden', !(pais && pais.toUpperCase() === 'BRASIL'));
+        toggleCampNacionalSub();
+      }
+
+      function toggleCampNacionalSub() {
+        const sub = document.querySelector('input[name="campNacionalSubTipo"]:checked')?.value;
+        const regiaoContainer = document.getElementById('campRegiaoContainer');
+        const ufContainer = document.getElementById('campUfContainer');
+        if (sub === 'uf') {
+          regiaoContainer.classList.add('hidden');
+          ufContainer.classList.remove('hidden');
+        } else {
+          regiaoContainer.classList.remove('hidden');
+          ufContainer.classList.add('hidden');
+        }
+      }
+
+      function toggleEventUf() {
+        const pais = document.getElementById('eventPais').value;
+        const ufContainer = document.getElementById('eventUfContainer');
+        const localidadeContainer = document.getElementById('containerLocalidadeEvento');
+        if (pais && pais.toUpperCase() === 'BRASIL') {
+          ufContainer.classList.remove('hidden');
+          localidadeContainer.classList.add('hidden');
+        } else {
+          ufContainer.classList.add('hidden');
+          if (pais) {
+            localidadeContainer.classList.remove('hidden');
+          } else {
+            localidadeContainer.classList.add('hidden');
+          }
+        }
+        syncEventLocationFields();
+      }
+
+      function syncEventLocationFields() {
+        const ufVal = document.getElementById('eventUf').value || '';
+        const paisVal = document.getElementById('eventPais').value || '';
+        document.getElementById('ufEventoSync').value = ufVal || '-';
+        document.getElementById('paisEventoSync').value = paisVal || '-';
+      }
+
+      // ---------- Geração do nome Eloqua do evento (nosso) ----------
       function generateEventEloquaName(paisNome, uf, mesNome, anoLongo, nome) {
         let paisSigla = 'XX';
         if (paisNome.toUpperCase() === 'BRASIL') {
@@ -353,179 +728,172 @@
           if (paisEncontrado) paisSigla = paisEncontrado.sigla;
         }
         const ufPart = (paisNome.toUpperCase() === 'BRASIL' && uf) ? `-${uf}` : '';
-        const mm = mesesNumMap[mesNome] || '00';
+        const mm = mesesNum[mesNome] || '00';
         const yy = anoLongo ? String(anoLongo).slice(-2) : '00';
         const nomeLimitado = nome.substring(0, 34);
         const nomeCompleto = `E[${paisSigla}${ufPart}.${mm}/${yy}.${nomeLimitado}]`;
         return nomeCompleto.substring(0, 50);
       }
 
-      function updateEventEloquaField() {
-        const nome = document.getElementById('nomeEvento')?.value.trim() || '';
-        const ano = document.getElementById('edicaoEvento')?.value || '';
-        const mes = document.getElementById('mesEvento')?.value || '';
-        const pais = document.getElementById('paisEvento')?.value || '';
-        const uf = document.getElementById('ufEvento')?.value || '';
-        const eloquaField = document.getElementById('nomeEloquaEvento');
-        if (eloquaField) {
-          eloquaField.value = generateEventEloquaName(pais, uf, mes, ano, nome);
-        }
-      }
-
-      // ==================== FUNÇÕES DE CÓPIA ====================
-      function copyEloquaCode() {
-        const input = document.getElementById('nomeEloquaEvento');
-        const text = input.value.trim();
-        if (!text || text === 'Gerado automaticamente...') {
-          alert('Nenhum código Eloqua gerado para copiar.');
-          return;
-        }
-        const btn = document.querySelector('[onclick="copyEloquaCode()"]');
-        const originalHtml = btn.innerHTML;
-        const checkIcon = `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => {
-            btn.innerHTML = checkIcon;
-            setTimeout(() => btn.innerHTML = originalHtml, 1500);
-          }).catch(() => {
-            fallbackCopy(text);
-          });
+      function generateEventEloquaField() {
+        const nome = document.getElementById('eventNome').value.trim() || '';
+        const ano = document.getElementById('eventAno').value || '';
+        const mes = document.getElementById('eventMes').value || '';
+        const pais = document.getElementById('eventPais').value || '';
+        const uf = document.getElementById('eventUf').value || '';
+        const field = document.getElementById('eventEloqua');
+        if (field && nome && ano && mes && pais) {
+          field.value = generateEventEloquaName(pais, uf, mes, ano, nome);
         } else {
-          fallbackCopy(text);
+          field.value = '';
         }
+        combine();
       }
 
-      function copiarJustificativa() {
-        const textarea = document.getElementById('descEvento');
-        const text = textarea.value.trim();
-        if (!text) {
-          alert('Não há justificativa para copiar.');
-          return;
-        }
-        const btn = document.querySelector('[onclick="copiarJustificativa()"]');
-        const originalHtml = btn.innerHTML;
-        const checkIcon = `<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      // ---------- Geração do nome da campanha (mantida do original) ----------
+      function generateCampaignEloqua() {
+        try {
+          const nome = document.getElementById('campNome').value.trim();
+          const dataInicio = document.getElementById('campDataInicio').value;
+          const paisNome = document.getElementById('campPais').value;
+          if (!nome || !dataInicio || !paisNome) {
+            document.getElementById('campEloqua').value = '';
+            return;
+          }
+          let paisSigla = 'BRA';
+          const p = paises.find(p => p.nome === paisNome);
+          if (p) paisSigla = p.sigla;
 
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => {
-            btn.innerHTML = checkIcon;
-            setTimeout(() => btn.innerHTML = originalHtml, 1500);
-          }).catch(() => {
-            fallbackCopy(text);
-          });
+          let sufixo = '';
+          if (paisNome.toUpperCase() === 'BRASIL') {
+            const sub = document.querySelector('input[name="campNacionalSubTipo"]:checked')?.value;
+            if (sub === 'uf') {
+              const uf = document.getElementById('campUf').value;
+              if (uf) sufixo = `-${uf}`;
+            } else {
+              const regiaoSigla = document.getElementById('campRegiao').value;
+              if (regiaoSigla) sufixo = `-${regiaoSigla}`;
+            }
+          }
+
+          let mm = '00', yy = '00';
+          if (dataInicio.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const [, mes, ano] = dataInicio.split('-');
+            mm = mes;
+            yy = ano.slice(-2);
+          }
+          const nomeLimitado = nome.substring(0, 34);
+          const completo = `C[${paisSigla}${sufixo}.${mm}/${yy}.${nomeLimitado}]`;
+          document.getElementById('campEloqua').value = completo.substring(0, 50);
+        } catch (e) {
+          console.warn('Erro ao gerar nome da campanha:', e);
+          document.getElementById('campEloqua').value = '';
+        }
+        combine();
+      }
+
+      // ---------- Combinar conforme modo ----------
+      function combine() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const camp = document.getElementById('campEloqua').value;
+        const evt = document.getElementById('eventEloqua').value;
+
+        if (mode === 'campaign') {
+          combinedInput.value = camp || '';
+        } else if (mode === 'event') {
+          combinedInput.value = evt || '';
         } else {
-          fallbackCopy(text);
+          combinedInput.value = (camp + evt) || '';
+        }
+
+        if (combinedInput.value) {
+          combinedInput.classList.add('bg-indigo-50', 'border-indigo-300');
+        } else {
+          combinedInput.classList.remove('bg-indigo-50', 'border-indigo-300');
         }
       }
 
-      function fallbackCopy(text) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
+      // ---------- Copiar combinado ----------
+      function copyCombined(event) {
+        const input = document.getElementById('combinedEloqua');
+        if (!input.value) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(input.value).then(() => showToast("Copiado!")).catch(() => fallbackCopy(input));
+        } else {
+          fallbackCopy(input);
+        }
+      }
+
+      function fallbackCopy(input) {
+        input.select();
         try {
           document.execCommand('copy');
-          alert('Conteúdo copiado!');
+          showToast("Copiado!");
         } catch (err) {
-          alert('Não foi possível copiar. Copie manualmente.');
+          showToast("Erro ao copiar");
         }
-        document.body.removeChild(textarea);
+        input.blur();
       }
 
-      // ==================== FUNÇÃO GERAR JUSTIFICATIVA ====================
-      function gerarJustificativa() {
-        // Coletar dados (com fallback para vazio)
-        const nome = document.getElementById('nomeEvento').value.trim() || '';
-        const eloqua = document.getElementById('nomeEloquaEvento').value.trim() || '';
-        const ano = document.getElementById('edicaoEvento').value || '';
-        const mes = document.getElementById('mesEvento').value || '';
-        const pais = document.getElementById('paisEvento').value || '';
-        const uf = document.getElementById('ufEvento').value || '';
-        const localIntl = document.getElementById('localidadeInternacionalEvento').value.trim() || '';
-        const financiamento = document.getElementById('financiamento').value || '';
-        const mercadoAlvo = Array.from(document.querySelectorAll('input[name="mercadoAlvo"]:checked')).map(cb => cb.value);
-        const presencial = document.getElementById('presencial').checked;
-        const transmitido = document.getElementById('transmitidoWeb').checked;
-        const site = document.getElementById('siteEvento').value.trim() || '';
-        const tags = currentEventTags.map(t => t.texto).join(', ') || '';
-        const localLivre = document.getElementById('localLivre').value.trim() || '';
+      // ---------- Funções do evento (nosso formulário) ----------
+      // Abas
+      function switchEventTab(tab) {
+        document.getElementById('event-tab-main').classList.toggle('hidden', tab !== 'main');
+        document.getElementById('event-tab-extra').classList.toggle('hidden', tab !== 'extra');
+        const btnMain = document.getElementById('btn-event-tab-main');
+        const btnExtra = document.getElementById('btn-event-tab-extra');
+        btnMain.className = `flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${tab === 'main' ? 'tab-active' : 'tab-inactive'}`;
+        btnExtra.className = `flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${tab === 'extra' ? 'tab-active' : 'tab-inactive'}`;
+      }
 
-        // Construir localização
-        let localizacao = '';
-        if (pais) {
-          localizacao = pais;
-          if (pais.toUpperCase() === 'BRASIL' && uf) localizacao += ` - ${uf}`;
-          else if (localIntl) localizacao += ` - ${localIntl}`;
-        }
-
-        // Modalidade
-        let modalidade = '';
-        if (presencial && transmitido) modalidade = 'presencial e transmitido via web';
-        else if (presencial) modalidade = 'presencial';
-        else if (transmitido) modalidade = 'transmitido via web';
-
-        // Construir texto
-        let justificativa = '';
-
-        // Início com nome Eloqua
-        if (eloqua) {
-          justificativa += `**Identificação Eloqua:** ${eloqua}\n\n`;
-        }
-
-        justificativa += `Acrescente aqui a sua justificativa pessoal:\n\n`;
-
-        // Frase inicial com nome e período
-        if (nome && mes && ano) {
-          justificativa += `O evento "${nome}", programado para ${mes} de ${ano}`;
-        } else if (nome) {
-          justificativa += `O evento "${nome}"`;
+      // Toggle location fields (presencial)
+      function toggleLocationFields() {
+        const isPresencial = document.getElementById('presencial').checked;
+        const locationBlock = document.getElementById('locationBlock');
+        const enderecoContainer = document.getElementById('enderecoContainer');
+        const syncContainer = document.querySelector('#event-tab-extra .p-4.bg-slate-50:last-of-type');
+        if (!isPresencial) {
+          locationBlock.style.display = 'none';
+          enderecoContainer.style.display = 'none';
+          if (syncContainer) syncContainer.style.display = 'none';
+          // Limpa valores
+          document.getElementById('eventUf').value = '';
+          document.getElementById('localidadeInternacionalEvento').value = '';
+          document.getElementById('cepEvento').value = '';
+          document.getElementById('enderecoEvento').value = '';
+          document.getElementById('municipioEvento').value = '';
+          document.getElementById('localLivre').value = '';
+          document.getElementById('ufEventoSync').value = '-';
+          document.getElementById('paisEventoSync').value = '-';
+          document.getElementById('eventPais').disabled = true;
         } else {
-          justificativa += `Este evento`;
+          locationBlock.style.display = '';
+          enderecoContainer.style.display = '';
+          if (syncContainer) syncContainer.style.display = '';
+          document.getElementById('eventPais').disabled = false;
+          toggleEventUf();
+          syncEventLocationFields();
         }
-
-        if (localizacao) {
-          justificativa += `, a ser realizado em ${localizacao}`;
-        }
-
-        if (financiamento && financiamento !== 'Área origem') {
-          justificativa += `, com financiamento do tipo ${financiamento}`;
-        }
-
-        if (mercadoAlvo.length) {
-          justificativa += `, voltado para o mercado ${mercadoAlvo.join(', ')}`;
-        }
-
-        if (modalidade) {
-          justificativa += `, na modalidade ${modalidade}`;
-        }
-
-        if (presencial && localLivre) {
-          justificativa += `, no local ${localLivre}`;
-        }
-
-        if (site) {
-          justificativa += `, com site oficial ${site}`;
-        }
-
-        if (tags) {
-          justificativa += `, e com as tags: ${tags}`;
-        }
-
-        justificativa += `. `;
-
-        // Complemento genérico
-        justificativa += `. `;
-		//`A realização deste evento é fundamental para promover a integração entre os atores envolvidos, fomentar o debate sobre temas estratégicos e gerar oportunidades de negócio e aprendizado. Além disso, contribui para a visibilidade da instituição e para o fortalecimento de sua imagem no mercado.`;
-
-        // Preencher e ajustar altura
-        const descTextarea = document.getElementById('descEvento');
-        descTextarea.value = justificativa;
-        descTextarea.style.height = 'auto';
-        descTextarea.style.height = descTextarea.scrollHeight + 'px';
       }
 
-      // ==================== FUNÇÕES DE TAGS ====================
+      // Copiar Eloqua do evento
+      function copyEloquaCodeEvent() {
+        const input = document.getElementById('eventEloqua');
+        if (!input.value) { alert('Nenhum código Eloqua gerado para copiar.'); return; }
+        const btn = document.querySelector('[onclick="copyEloquaCodeEvent()"]');
+        const originalHtml = btn.innerHTML;
+        const checkIcon = `<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(input.value).then(() => {
+            btn.innerHTML = checkIcon;
+            setTimeout(() => btn.innerHTML = originalHtml, 1500);
+          }).catch(() => fallbackCopy(input));
+        } else {
+          fallbackCopy(input);
+        }
+      }
+
+      // Funções de tags
       function renderTags() {
         const container = document.getElementById('tagsContainer');
         if (!container) return;
@@ -543,10 +911,7 @@
         const texto = input.value.trim();
         if (!texto) return;
         const existe = currentEventTags.some(t => t.texto.toLowerCase() === texto.toLowerCase());
-        if (existe) {
-          alert('Tag já existe!');
-          return;
-        }
+        if (existe) { alert('Tag já existe!'); return; }
         currentEventTags.push({ texto, automatica: false });
         input.value = '';
         renderTags();
@@ -559,25 +924,13 @@
 
       async function gerarTagsComIA(event) {
         let siteUrl = document.getElementById('siteEvento').value.trim();
-        if (!siteUrl) {
-          alert('Por favor, insira a URL do site primeiro.');
-          return;
-        }
-        if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) {
-          siteUrl = 'https://' + siteUrl;
-        }
-        try {
-          new URL(siteUrl);
-        } catch {
-          alert('URL inválida. Verifique se o endereço está correto.');
-          return;
-        }
-
+        if (!siteUrl) { alert('Por favor, insira a URL do site primeiro.'); return; }
+        if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) siteUrl = 'https://' + siteUrl;
+        try { new URL(siteUrl); } catch { alert('URL inválida.'); return; }
         const btn = event.target;
         const textoOriginal = btn.innerText;
         btn.innerText = '🔍 Analisando site...';
         btn.disabled = true;
-
         try {
           const response = await fetch('http://localhost:5000/api/scrape-tags', {
             method: 'POST',
@@ -585,430 +938,300 @@
             body: JSON.stringify({ url: siteUrl })
           });
           const data = await response.json();
-          if (data.error) {
-            alert('Erro: ' + data.error);
-            return;
-          }
+          if (data.error) { alert('Erro: ' + data.error); return; }
           if (data.tags && data.tags.length > 0) {
             data.tags.forEach(tag => {
               const existe = currentEventTags.some(t => t.texto.toLowerCase() === tag.toLowerCase());
-              if (!existe) {
-                currentEventTags.push({ texto: tag, automatica: true, geradoPorIA: true });
-              }
+              if (!existe) currentEventTags.push({ texto: tag, automatica: true, geradoPorIA: true });
             });
             renderTags();
             alert(`${data.tags.length} tag(s) gerada(s) com sucesso!`);
-          } else {
-            alert('Nenhuma tag identificada no site.');
-          }
+          } else alert('Nenhuma tag identificada no site.');
         } catch (error) {
           console.error('Erro:', error);
-          alert('Erro ao conectar com o serviço de IA. Verifique se o backend está rodando.');
+          alert('Erro ao conectar com o serviço de IA.');
         } finally {
           btn.innerText = textoOriginal;
           btn.disabled = false;
         }
       }
 
-      // ==================== FUNÇÕES AUXILIARES DO FORMULÁRIO ====================
-      function togglePaisEvento() {
-        const isBrasil = document.getElementById('paisEvento').value.toUpperCase() === 'BRASIL';
-        document.getElementById('containerUFEvento').classList.toggle('hidden', !isBrasil);
-        document.getElementById('containerLocalidadeEvento').classList.toggle('hidden', isBrasil);
-        if (!isBrasil) {
-          document.getElementById('ufEvento').value = '';
+      // Gerar justificativa (com Eloqua no início)
+      function gerarJustificativa() {
+        const nome = document.getElementById('eventNome').value.trim() || '';
+        const eloqua = document.getElementById('eventEloqua').value.trim() || '';
+        const ano = document.getElementById('eventAno').value || '';
+        const mes = document.getElementById('eventMes').value || '';
+        const pais = document.getElementById('eventPais').value || '';
+        const uf = document.getElementById('eventUf').value || '';
+        const localIntl = document.getElementById('localidadeInternacionalEvento').value.trim() || '';
+        const financiamento = document.getElementById('financiamento').value || '';
+        const mercadoAlvo = Array.from(document.querySelectorAll('input[name="mercadoAlvo"]:checked')).map(cb => cb.value);
+        const presencial = document.getElementById('presencial').checked;
+        const transmitido = document.getElementById('transmitidoWeb').checked;
+        const site = document.getElementById('siteEvento').value.trim() || '';
+        const localLivre = document.getElementById('localLivre').value.trim() || '';
+        const dataInicio = document.getElementById('dataInicioEvento').value;
+        const dataFim = document.getElementById('dataFimEvento').value;
+        const stand = document.getElementById('stand').value;
+
+        function formatDate(dateStr) {
+          if (!dateStr) return '';
+          const parts = dateStr.split('-');
+          return `${parts[2]}/${parts[1]}/${parts[0]}`;
         }
-        syncEventLocationFields();
-      }
+        const dataInicioFormatada = formatDate(dataInicio);
+        const dataFimFormatada = formatDate(dataFim);
 
-      function syncEventLocationFields() {
-        const ufVal = document.getElementById('ufEvento').value || '';
-        const paisVal = document.getElementById('paisEvento').value || '';
-        document.getElementById('ufEventoSync').value = ufVal || '-';
-        document.getElementById('paisEventoSync').value = paisVal || '-';
-      }
+        let localizacao = '';
+        if (pais) {
+          localizacao = pais;
+          if (pais.toUpperCase() === 'BRASIL' && uf) localizacao += ` - ${uf}`;
+          else if (localIntl) localizacao += ` - ${localIntl}`;
+        }
 
-      function toggleLocationFields() {
-        const isPresencial = document.getElementById('presencial').checked;
-        const locationBlock = document.getElementById('locationBlock');
-        const enderecoContainer = document.getElementById('enderecoContainer');
-        const syncContainer = document.getElementById('syncContainer');
+        let modalidade = '';
+        if (presencial && transmitido) modalidade = 'presencial e transmitido via web';
+        else if (presencial) modalidade = 'presencial';
+        else if (transmitido) modalidade = 'transmitido via web';
 
-        if (!isPresencial) {
-          locationBlock.style.display = 'none';
-          enderecoContainer.style.display = 'none';
-          syncContainer.style.display = 'none';
-          document.getElementById('ufEvento').value = '';
-          document.getElementById('localidadeInternacionalEvento').value = '';
-          document.getElementById('cepEvento').value = '';
-          document.getElementById('enderecoEvento').value = '';
-          document.getElementById('municipioEvento').value = '';
-          document.getElementById('localLivre').value = '';
-          document.getElementById('ufEventoSync').value = '-';
-          document.getElementById('paisEventoSync').value = '-';
-          document.getElementById('paisEvento').disabled = true;
+        let partes = [];
+        if (nome) {
+          let periodo = '';
+          if (mes && ano) periodo = ` ${mes} de ${ano}`;
+          partes.push(`O evento "${nome}"${periodo}`);
         } else {
-          locationBlock.style.display = '';
-          enderecoContainer.style.display = '';
-          syncContainer.style.display = '';
-          document.getElementById('paisEvento').disabled = false;
-          togglePaisEvento();
-          syncEventLocationFields();
+          partes.push('Este evento');
+        }
+        if (localizacao) partes.push(`acontecerá em ${localizacao}`);
+        if (dataInicioFormatada) {
+          if (dataFimFormatada) partes.push(`no período de ${dataInicioFormatada} a ${dataFimFormatada}`);
+          else partes.push(`na data de ${dataInicioFormatada}`);
+        }
+        if (modalidade) {
+          if (presencial && localLivre) partes.push(`será realizado na modalidade ${modalidade} no local ${localLivre}`);
+          else partes.push(`será realizado na modalidade ${modalidade}`);
+        } else if (presencial && localLivre) {
+          partes.push(`será realizado no local ${localLivre}`);
+        }
+        if (stand) partes.push(`com stand ${stand.toLowerCase()}`);
+        if (financiamento && financiamento !== 'Área origem') partes.push(`com financiamento do tipo ${financiamento}`);
+        if (mercadoAlvo.length) partes.push(`voltado para o mercado ${mercadoAlvo.join(', ')}`);
+        if (site) partes.push(`e site oficial ${site}`);
+
+        let descricao = '';
+        for (let i = 0; i < partes.length; i++) {
+          let p = partes[i];
+          if (i === 0) descricao += p;
+          else {
+            if (i === partes.length - 1) descricao += ` e ${p}`;
+            else descricao += `, ${p}`;
+          }
+        }
+        descricao += '.';
+
+        let justificativa = '';
+        if (eloqua) justificativa += `**Identificação Eloqua:** ${eloqua}\n\n`;
+        justificativa += 'Acrescente aqui a justificativa personalizada desse evento:\n\n';
+        justificativa += descricao;
+
+        const textarea = document.getElementById('descEvento');
+        textarea.value = justificativa;
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+
+      function copiarJustificativa() {
+        const textarea = document.getElementById('descEvento');
+        const text = textarea.value.trim();
+        if (!text) { alert('Não há conteúdo para copiar.'); return; }
+        const btn = document.querySelector('[onclick="copiarJustificativa()"]');
+        const originalHtml = btn.innerHTML;
+        const checkIcon = `<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            btn.innerHTML = checkIcon;
+            setTimeout(() => btn.innerHTML = originalHtml, 1500);
+          }).catch(() => fallbackCopy(text));
+        } else {
+          fallbackCopy(text);
         }
       }
 
-      function showModal(title, code) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalCode').innerText = code;
-        document.getElementById('modal').classList.remove('hidden');
-      }
-
-      function closeModal() {
-        document.getElementById('modal').classList.add('hidden');
-      }
-
-      // ==================== RESET DO FORMULÁRIO ====================
+      // ---------- Reset dos formulários ----------
       function resetEventForm() {
         document.getElementById('eventForm').reset();
         document.getElementById('editingEventId').value = '';
         document.getElementById('btnSubmitEvento').innerText = 'Salvar Evento';
-        document.getElementById('btnSubmitEvento').className = 'w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg transition-all uppercase tracking-widest text-[10px]';
-        document.getElementById('eventFormTitle').innerText = 'Cadastro de Evento';
+        document.getElementById('btnSubmitEvento').className = 'w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg transition-all uppercase tracking-widest text-[10px]';
         document.querySelectorAll('input[name="mercadoAlvo"]').forEach(cb => cb.checked = false);
         document.getElementById('financiamento').value = 'Área origem';
         document.getElementById('presencial').checked = true;
         document.getElementById('transmitidoWeb').checked = false;
+        document.getElementById('stand').value = '';
         currentEventTags = [];
         renderTags();
         toggleLocationFields();
-        updateEventEloquaField();
-        atualizarContador(); // atualiza contador após reset
-      }
-
-      // ==================== CARREGAR DADOS PARA EDIÇÃO ====================
-      function loadEventForEdit(eventId) {
-        const eventObj = events.find(e => e.id === eventId);
-        if (!eventObj) return;
-
-        document.getElementById('editingEventId').value = eventObj.id;
-        document.getElementById('nomeEvento').value = eventObj.nome;
-        document.getElementById('edicaoEvento').value = eventObj.ano;
-        document.getElementById('mesEvento').value = eventObj.mes;
-        document.getElementById('paisEvento').value = eventObj.pais;
-        document.getElementById('presencial').checked = eventObj.presencial !== undefined ? eventObj.presencial : true;
-        document.getElementById('transmitidoWeb').checked = eventObj.transmitidoWeb || false;
-        toggleLocationFields();
-
-        if (eventObj.presencial !== false) {
-          if (eventObj.pais.toUpperCase() === 'BRASIL') {
-            document.getElementById('ufEvento').value = eventObj.local || '';
-            document.getElementById('localidadeInternacionalEvento').value = '';
-          } else {
-            document.getElementById('ufEvento').value = '';
-            document.getElementById('localidadeInternacionalEvento').value = eventObj.local || '';
-          }
-          togglePaisEvento();
-          document.getElementById('cepEvento').value = eventObj.cep || '';
-          document.getElementById('enderecoEvento').value = eventObj.endereco || '';
-          document.getElementById('municipioEvento').value = eventObj.municipio || '';
-          document.getElementById('localLivre').value = eventObj.localLivre || '';
-        } else {
-          document.getElementById('ufEvento').value = '';
-          document.getElementById('localidadeInternacionalEvento').value = '';
-          document.getElementById('cepEvento').value = '';
-          document.getElementById('enderecoEvento').value = '';
-          document.getElementById('municipioEvento').value = '';
-          document.getElementById('localLivre').value = '';
-        }
-
-        document.getElementById('siteEvento').value = eventObj.site || '';
-        document.getElementById('descEvento').value = eventObj.descricao || '';
-        document.getElementById('dataInicioEvento').value = eventObj.dataInicio || '';
-        document.getElementById('dataFimEvento').value = eventObj.dataFim || '';
-
-        if (eventObj.financiamento) {
-          document.getElementById('financiamento').value = eventObj.financiamento;
-        } else {
-          document.getElementById('financiamento').value = 'Área origem';
-        }
-
-        document.querySelectorAll('input[name="mercadoAlvo"]').forEach(cb => {
-          cb.checked = eventObj.mercadoAlvo && eventObj.mercadoAlvo.includes(cb.value);
-        });
-
-        if (eventObj.tags && Array.isArray(eventObj.tags)) {
-          currentEventTags = eventObj.tags.map(t => {
-            if (typeof t === 'string') return { texto: t, automatica: false };
-            return t;
-          });
-        } else {
-          currentEventTags = [];
-        }
-        renderTags();
-
-        document.getElementById('btnSubmitEvento').innerText = 'Atualizar Evento';
-        document.getElementById('btnSubmitEvento').className = 'w-full py-4 bg-orange-500 text-white font-bold rounded-2xl hover:bg-orange-600 shadow-lg transition-all uppercase tracking-widest text-[10px]';
-        document.getElementById('eventFormTitle').innerText = `${eventObj.code} - ${eventObj.nome}`;
-
+        generateEventEloquaField();
+        updateCharCounter('eventNome', 'eventNomeCounter2');
+        document.getElementById('eventPais').value = '';
+        toggleEventUf();
         syncEventLocationFields();
-        updateEventEloquaField();
-        atualizarContador(); // atualiza contador após carregar evento
       }
 
-      // ==================== SUBMISSÃO DO FORMULÁRIO ====================
-      document.getElementById('eventForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+      function resetAll() {
+        // Reset campanha
+        document.getElementById('campNome').value = '';
+        document.getElementById('campDataInicio').value = '';
+        document.getElementById('campPais').value = '';
+        document.querySelector('input[name="campNacionalSubTipo"][value="regiao"]').checked = true;
+        document.getElementById('campRegiao').value = '';
+        document.getElementById('campUf').value = '';
+        document.getElementById('campEloqua').value = '';
+        updateCharCounter('campNome', 'campNomeCounter');
 
-        const editId = document.getElementById('editingEventId').value;
-        const nome = document.getElementById('nomeEvento').value.trim();
-        const ano = document.getElementById('edicaoEvento').value;
-        const mes = document.getElementById('mesEvento').value;
-        const pais = document.getElementById('paisEvento').value;
-        const uf = document.getElementById('ufEvento').value;
-        const localIntl = document.getElementById('localidadeInternacionalEvento').value.trim();
-        const local = pais.toUpperCase() === 'BRASIL' ? uf : localIntl;
-        const descricao = document.getElementById('descEvento').value.trim();
-        const dataInicio = document.getElementById('dataInicioEvento').value;
-        const dataFim = document.getElementById('dataFimEvento').value;
-        const site = document.getElementById('siteEvento').value.trim();
-        const cep = document.getElementById('cepEvento').value.trim();
-        const endereco = document.getElementById('enderecoEvento').value.trim();
-        const municipio = document.getElementById('municipioEvento').value.trim();
-        const localLivre = document.getElementById('localLivre').value.trim();
-        const nome_eloqua = document.getElementById('nomeEloquaEvento').value;
-
-        const financiamento = document.getElementById('financiamento').value;
-        const mercadoAlvo = Array.from(document.querySelectorAll('input[name="mercadoAlvo"]:checked')).map(cb => cb.value);
-        const presencial = document.getElementById('presencial').checked;
-        const transmitidoWeb = document.getElementById('transmitidoWeb').checked;
-
-        const tags = currentEventTags;
-
-        const duplicate = events.find(ev =>
-          ev.id !== editId &&
-          ev.nome.toLowerCase() === nome.toLowerCase() &&
-          String(ev.ano) === String(ano) &&
-          ev.mes === mes
-        );
-
-        if (duplicate) {
-          const confirmar = confirm(`Já existe um evento com mesmo nome, ano e mês: ${duplicate.code}. Deseja editar esse registro?`);
-          if (confirmar) {
-            loadEventForEdit(duplicate.id);
-          }
-          return;
-        }
-
-        const eventObj = {
-          id: editId || `event-${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`,
-          code: editId ? events.find(ev => ev.id === editId).code : generateEventCode(),
-          nome,
-          ano,
-          mes,
-          pais,
-          local,
-          descricao,
-          dataInicio,
-          dataFim,
-          site,
-          cep,
-          endereco,
-          municipio,
-          localLivre,
-          financiamento,
-          mercadoAlvo,
-          presencial,
-          transmitidoWeb,
-          tags,
-          nome_eloqua,
-          createdAt: editId ? events.find(ev => ev.id === editId).createdAt : new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-
-        if (editId) {
-          const idx = events.findIndex(ev => ev.id === editId);
-          events[idx] = eventObj;
-          showModal('Evento atualizado', eventObj.code);
-        } else {
-          events.unshift(eventObj);
-          showModal('Evento criado', eventObj.code);
-        }
-
+        // Reset evento
         resetEventForm();
-      });
 
-      // ==================== CONTROLE DE ABAS ====================
-      function switchEventTab(tab) {
-        document.getElementById('event-tab-main').classList.toggle('hidden', tab !== 'main');
-        document.getElementById('event-tab-extra').classList.toggle('hidden', tab !== 'extra');
+        // Reset modo para "both"
+        document.querySelector('input[name="mode"][value="both"]').checked = true;
+        updateModeVisibility();
 
-        const btnMain = document.getElementById('btn-event-tab-main');
-        const btnExtra = document.getElementById('btn-event-tab-extra');
-        btnMain.className = `flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${tab === 'main' ? 'tab-active' : 'tab-inactive'}`;
-        btnExtra.className = `flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${tab === 'extra' ? 'tab-active' : 'tab-inactive'}`;
+        // Limpar combinado
+        combinedInput.value = '';
+        combinedInput.classList.remove('bg-indigo-50', 'border-indigo-300');
       }
 
-      // ==================== AUTCOMPLETE ====================
+      // ---------- Autocomplete (baseado nos eventos mock, se houver) ----------
       function setupAutocomplete() {
-        const nomeEventoInput = document.getElementById('nomeEvento');
-        const eventList = document.getElementById('autocomplete-event-list');
-        nomeEventoInput.addEventListener('input', () => {
-          const val = nomeEventoInput.value.trim().toLowerCase();
-          eventList.innerHTML = '';
-          if (!val) {
-            eventList.classList.add('hidden');
-            return;
-          }
-          const matches = [...new Set(events.map(e => e.nome))]
-            .filter(name => name.toLowerCase().includes(val))
-            .slice(0, 8);
-          if (!matches.length) {
-            eventList.classList.add('hidden');
-            return;
-          }
-          eventList.classList.remove('hidden');
+        const input = document.getElementById('eventNome');
+        const list = document.getElementById('autocomplete-event-list');
+        // Usaremos uma lista vazia por enquanto (pode ser populada com eventos mock)
+        input.addEventListener('input', () => {
+          const val = input.value.trim().toLowerCase();
+          list.innerHTML = '';
+          if (!val) { list.classList.add('hidden'); return; }
+          // Se tivermos eventos mock, podemos usar; senão, vazio
+          const matches = []; // Poderia ser preenchido com eventos existentes
+          if (!matches.length) { list.classList.add('hidden'); return; }
+          list.classList.remove('hidden');
           matches.forEach(match => {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.textContent = match;
             div.onclick = () => {
-              nomeEventoInput.value = match;
-              eventList.classList.add('hidden');
-              updateEventEloquaField();
-              atualizarContador(); // atualiza contador ao selecionar autocomplete
+              input.value = match;
+              list.classList.add('hidden');
+              generateEventEloquaField();
+              updateCharCounter('eventNome', 'eventNomeCounter2');
             };
-            eventList.appendChild(div);
+            list.appendChild(div);
           });
         });
         document.addEventListener('click', (e) => {
-          if (e.target !== nomeEventoInput) eventList?.classList.add('hidden');
+          if (e.target !== input) list?.classList.add('hidden');
         });
       }
 
-      // ==================== POPULAR SELECTS ====================
-      function populatePaisSelect() {
-        const select = document.getElementById('paisEvento');
-        if (!select) return;
-
-        // Separa Brasil dos demais
-        const brasil = paises.find(p => p.nome.toUpperCase() === 'BRASIL');
-        const outros = paises.filter(p => p.nome.toUpperCase() !== 'BRASIL');
-
-        // Ordena os outros alfabeticamente
-        outros.sort((a, b) => a.nome.localeCompare(b.nome));
-
-        // Monta a lista: Brasil primeiro, depois os outros
-        const lista = brasil ? [brasil, ...outros] : outros;
-
-        select.innerHTML = lista.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
-        select.value = 'BRASIL'; // mantém Brasil selecionado por padrão
-      }
-
-      function populateUfSelect() {
-        const select = document.getElementById('ufEvento');
-        if (!select) return;
-        select.innerHTML = '<option value="">-</option>' + 
-          ufs.map(uf => `<option value="${uf.sigla}">${uf.sigla}</option>`).join('');
-      }
-
-      // ==================== DADOS MOCK ====================
-      function generateMockData() {
-        events = [
-          {
-            id: 'event-1',
-            code: 'EVT-1000',
-            nome: 'Fórum GovTech Brasília',
-            ano: '2026',
-            mes: 'Abril',
-            pais: 'BRASIL',
-            local: 'DF',
-            descricao: 'Evento institucional com foco em governo digital',
-            site: 'https://www.serpro.gov.br',
-            dataInicio: '2026-04-10',
-            dataFim: '2026-04-12',
-            cep: '70040-900',
-            endereco: 'Setor de Autarquias Sul, Quadra 6',
-            municipio: 'Brasília',
-            localLivre: 'Auditório Principal',
-            financiamento: 'Corporativo',
-            mercadoAlvo: ['Público', 'Internacional'],
-            presencial: true,
-            transmitidoWeb: true,
-            tags: [
-              { texto: 'SERPRO', automatica: true },
-              { texto: 'Governo Federal', automatica: true },
-              { texto: 'Tag Manual', automatica: false }
-            ],
-            nome_eloqua: generateEventEloquaName('BRASIL', 'DF', 'Abril', '2026', 'Fórum GovTech Brasília'),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: 'event-2',
-            code: 'EVT-1001',
-            nome: 'Expo Dados Públicos',
-            ano: '2026',
-            mes: 'Junho',
-            pais: 'BRASIL',
-            local: 'SP',
-            descricao: 'Feira com foco em dados e plataformas públicas',
-            site: 'https://www.exemplo.com',
-            dataInicio: '2026-06-05',
-            dataFim: '2026-06-07',
-            cep: '01000-000',
-            endereco: 'Av. Paulista, 1000',
-            municipio: 'São Paulo',
-            localLivre: 'Centro de Exposições',
-            financiamento: 'Externo',
-            mercadoAlvo: ['Privado'],
-            presencial: true,
-            transmitidoWeb: false,
-            tags: [],
-            nome_eloqua: generateEventEloquaName('BRASIL', 'SP', 'Junho', '2026', 'Expo Dados Públicos'),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+      // ---------- Validação ao sair do campo (campanha e evento) ----------
+      function addValidationListeners() {
+        const requiredSelectors = ['#campNome', '#campDataInicio', '#campPais', '#eventNome', '#eventAno', '#eventMes', '#eventPais'];
+        requiredSelectors.forEach(sel => {
+          const input = document.querySelector(sel);
+          if (input) {
+            input.addEventListener('blur', () => {
+              if (!input.value.trim()) input.classList.add('invalid');
+              else input.classList.remove('invalid');
+            });
+            input.addEventListener('input', () => input.classList.remove('invalid'));
           }
-        ];
-        eventSequential = 1002;
+        });
       }
 
-      // ==================== INICIALIZAÇÃO ====================
-      generateMockData();
-      populatePaisSelect();
-      populateUfSelect();
+      // ---------- Event listeners ----------
+      function init() {
+        populateAll();
+        resetAll();
+        addValidationListeners();
 
-      document.getElementById('nomeEvento')?.addEventListener('input', function() {
-        updateEventEloquaField();
-        atualizarContador();
-      });
-      document.getElementById('edicaoEvento')?.addEventListener('input', updateEventEloquaField);
-      document.getElementById('mesEvento')?.addEventListener('change', updateEventEloquaField);
-      document.getElementById('paisEvento')?.addEventListener('change', updateEventEloquaField);
-      document.getElementById('ufEvento')?.addEventListener('change', updateEventEloquaField);
+        // Campanha
+        document.getElementById('campNome').addEventListener('input', function() {
+          updateCharCounter('campNome', 'campNomeCounter');
+          generateCampaignEloqua();
+        });
+        document.getElementById('campDataInicio').addEventListener('change', generateCampaignEloqua);
+        document.getElementById('campPais').addEventListener('change', function() {
+          toggleCampBrasilOptions();
+          generateCampaignEloqua();
+          if (!this.value) this.classList.add('invalid');
+        });
+        document.querySelectorAll('input[name="campNacionalSubTipo"]').forEach(r => {
+          r.addEventListener('change', function() {
+            toggleCampNacionalSub();
+            generateCampaignEloqua();
+          });
+        });
+        document.getElementById('campRegiao').addEventListener('change', generateCampaignEloqua);
+        document.getElementById('campUf').addEventListener('change', generateCampaignEloqua);
 
-      // Definir presencial como true e transmitidoWeb como false (padrão)
-      document.getElementById('presencial').checked = true;
-      document.getElementById('transmitidoWeb').checked = false;
-      toggleLocationFields();
-      // Inicializar contador
-      atualizarContador();
+        // Evento
+        document.getElementById('eventNome').addEventListener('input', function() {
+          updateCharCounter('eventNome', 'eventNomeCounter2');
+          generateEventEloquaField();
+        });
+        document.getElementById('eventAno').addEventListener('change', generateEventEloquaField);
+        document.getElementById('eventMes').addEventListener('change', generateEventEloquaField);
+        document.getElementById('eventPais').addEventListener('change', function() {
+          toggleEventUf();
+          generateEventEloquaField();
+          if (!this.value) this.classList.add('invalid');
+        });
+        document.getElementById('eventUf').addEventListener('change', function() {
+          generateEventEloquaField();
+          syncEventLocationFields();
+        });
+        document.getElementById('localidadeInternacionalEvento').addEventListener('input', function() {
+          syncEventLocationFields();
+        });
 
-      // Expor funções globais
+        // Reset global
+        document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+        // Modo
+        modeRadios.forEach(radio => radio.addEventListener('change', updateModeVisibility));
+
+        // Submissão do evento (apenas para demonstração, mantém a lógica de salvamento)
+        document.getElementById('eventForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          alert('Evento salvo (simulação).');
+          // Aqui poderia ser implementada a persistência.
+        });
+
+        // Inicializar contadores e visibilidade
+        updateCharCounter('campNome', 'campNomeCounter');
+        updateCharCounter('eventNome', 'eventNomeCounter2');
+        toggleLocationFields();
+        updateModeVisibility();
+        generateCampaignEloqua();
+        generateEventEloquaField();
+        setupAutocomplete();
+      }
+
+      // Expor funções globalmente para os onclick
       window.switchEventTab = switchEventTab;
-      window.togglePaisEvento = togglePaisEvento;
-      window.syncEventLocationFields = syncEventLocationFields;
       window.toggleLocationFields = toggleLocationFields;
-      window.closeModal = closeModal;
-      window.loadEventForEdit = loadEventForEdit;
-      window.resetEventForm = resetEventForm;
+      window.copyEloquaCodeEvent = copyEloquaCodeEvent;
+      window.gerarTagsComIA = gerarTagsComIA;
       window.adicionarTagManual = adicionarTagManual;
       window.removerTag = removerTag;
-      window.gerarTagsComIA = gerarTagsComIA;
-      window.copyEloquaCode = copyEloquaCode;
-      window.copiarJustificativa = copiarJustificativa;
       window.gerarJustificativa = gerarJustificativa;
-      window.atualizarContador = atualizarContador;
+      window.copiarJustificativa = copiarJustificativa;
+      window.resetEventForm = resetEventForm;
+      window.copyCombined = copyCombined;
+
+      init();
     })();
   </script>
 </body>
+
 </html>
